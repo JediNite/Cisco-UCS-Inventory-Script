@@ -48,7 +48,9 @@ else {
 # Generate an encrypted password from input
 if($GeneratePassword.IsPresent)
 {
-	$PlainPassword = Read-Host "Please enter your password"
+#	$PlainPassword = Read-Host "Please enter your password"
+	Write-Host -NoNewline "Please enter your password: "
+	$PlainPassword = Read-Host
 	$SecurePassword = $PlainPassword | ConvertTo-SecureString -AsPlainText -Force | ConvertFrom-SecureString
 	Write-Host "Done! Here's your encrypted password, save this in the CSV:"
 	Write-Host $SecurePassword
