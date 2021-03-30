@@ -264,7 +264,7 @@ function GenerateReport()
 
 	# Get server memory info
 	AddToOutput -txt "<h2>Server Memory Inventory</h2>"
-	$Global:TMP_OUTPUT += Get-UcsMemoryUnit | Sort-Object -Property Dn,Location | where {$_.Capacity -ne "unspecified"} | Select-Object -Property Dn,Location,Capacity,Clock,OperState,Model | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsMemoryUnit | Sort-Object -Property Dn,Location | Where-Object {$_.Capacity -ne "unspecified"} | Select-Object -Property Dn,Location,Capacity,Clock,OperState,Model | ConvertTo-Html -Fragment
 
 	# Get server storage controller info
 	AddToOutput -txt "<h2>Server Storage Controller Inventory</h2>"
@@ -272,34 +272,50 @@ function GenerateReport()
 
 	# Get server local disk info
 	AddToOutput -txt "<h2>Server Local Disk Inventory</h2>"
-	$Global:TMP_OUTPUT += Get-UcsStorageLocalDisk | Sort-Object -Property Dn | Select-Object Dn,Model,Size,Serial | where {$_.Size -ne "unknown"}  | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsStorageLocalDisk | Sort-Object -Property Dn | Select-Object Dn,Model,Size,Serial | Where-Object {$_.Size -ne "unknown"}  | ConvertTo-Html -Fragment
 
 	AddToOutput -txt "</div>" # end subtab
 	AddToOutput -txt "<div class='content-sub' id='equipment-tab-firmware'>"
 
 	# Get UCSM firmware version
 	AddToOutput -txt "<h2>UCS Manager</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Dn,Type,Version | Sort-Object -Property Dn | Where-Object {$_.Type -eq "mgmt-ext"} | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "system"} | ConvertTo-Html -Fragment
 
 	# Get Fabric Interconnect firmware
 	AddToOutput -txt "<h2>Fabric Interconnect</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Dn,Type,Version | Sort-Object -Property Dn | Where-Object {$_.Type -eq "switch-kernel" -OR $_.Type -eq "switch-software"} | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "switch-kernel" -OR $_.Type -eq "switch-software"} | ConvertTo-Html -Fragment
 
 	# Get IOM firmware
 	AddToOutput -txt "<h2>IOM</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version | Sort-Object -Property Dn | Where-Object {$_.Type -eq "iocard"} | Where-Object -FilterScript {$_.Deployment -notlike "boot-loader"} | ConvertTo-Html -Fragment
-
-	# Get Server Adapter firmware
-	AddToOutput -txt "<h2>Server Adapters</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version | Sort-Object -Property Dn | Where-Object {$_.Type -eq "adaptor"} | Where-Object -FilterScript {$_.Deployment -notlike "boot-loader"} | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "iocard"} | Where-Object -FilterScript {$_.Deployment -notlike "boot-loader"} | ConvertTo-Html -Fragment
 
 	# Get Server CIMC firmware
 	AddToOutput -txt "<h2>Server CIMC</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version | Sort-Object -Property Dn | Where-Object {$_.Type -eq "blade-controller"} | Where-Object -FilterScript {$_.Deployment -notlike "boot-loader"} | ConvertTo-Html -Fragment
-
+	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "blade-controller"} | Where-Object -FilterScript {$_.Deployment -notlike "boot-loader"} | ConvertTo-Html -Fragment
+	
 	# Get Server BIOS versions
 	AddToOutput -txt "<h2>Server BIOS</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Dn,Type,Version | Sort-Object -Property Dn | Where-Object {$_.Type -eq "blade-bios" -Or $_.Type -eq "rack-bios"} | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version | Sort-Object -Property Dn | Where-Object {$_.Type -eq "blade-bios" -Or $_.Type -eq "rack-bios"} | ConvertTo-Html -Fragment
+
+	# Get Server Board Controller firmware
+	AddToOutput -txt "<h2>Server Board</h2>"
+	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "board-controller"} | Where-Object -FilterScript {$_.Deployment -notlike "boot-loader"} | ConvertTo-Html -Fragment
+
+	# Get Server Adapter firmware
+	AddToOutput -txt "<h2>Server Adapters</h2>"
+	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "adaptor"} | Where-Object -FilterScript {$_.Deployment -notlike "boot-loader"} | ConvertTo-Html -Fragment
+	
+	# Get FlexFlash Controller firmware
+	AddToOutput -txt "<h2>FlexFlash Controllers</h2>"
+	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "flexflash-controller"} | Where-Object -FilterScript {$_.Deployment -notlike "boot-loader"} | ConvertTo-Html -Fragment	
+	
+	# Get Server Disk firmware
+	AddToOutput -txt "<h2>Server Local Disks</h2>"
+	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "local-disk"} | ConvertTo-Html -Fragment	
+
+	# Get SAS Expander firmware
+	AddToOutput -txt "<h2>SAS Adapters</h2>"
+	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "sas-exp"} | ConvertTo-Html -Fragment	
 
 	# Get Host Firmware Packages
 	AddToOutput -txt "<h2>Host Firmware Packages</h2>"
@@ -506,7 +522,7 @@ function GenerateReport()
 
 	# Get Ethernet VLANs
 	AddToOutput -txt "<h2>Ethernet VLANs</h2>"
-	$Global:TMP_OUTPUT += Get-UcsVlan | where {$_.IfRole -eq "network"} | Sort-Object -Property Id | Select-Object Id,Name,SwitchId | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsVlan | Where-Object {$_.IfRole -eq "network"} | Sort-Object -Property Id | Select-Object Id,Name,SwitchId | ConvertTo-Html -Fragment
 
 	AddToOutput -txt "</div>" # end subtab
 	AddToOutput -txt "<div class='content-sub' id='lan-config-tab-policies'>"
@@ -537,7 +553,7 @@ function GenerateReport()
 
 	# Get IP CIMC MGMT Pool Assignments
 	AddToOutput -txt "<h2>CIMC IP Pool Assignments</h2>"
-	$Global:TMP_OUTPUT += Get-UcsIpPoolAddr | Sort-Object -Property AssignedToDn | where {$_.Assigned -eq "yes"} | Select-Object AssignedToDn,Id | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsIpPoolAddr | Sort-Object -Property AssignedToDn | Where-Object {$_.Assigned -eq "yes"} | Select-Object AssignedToDn,Id | ConvertTo-Html -Fragment
 
 	# Get MAC Address Pools
 	AddToOutput -txt "<h2>MAC Address Pools</h2>"
@@ -549,7 +565,7 @@ function GenerateReport()
 
 	# Get MAC Pool Assignments
 	AddToOutput -txt "<h2>MAC Address Pool Assignments</h2>"
-	$Global:TMP_OUTPUT += Get-UcsVnic | Sort-Object -Property Dn | Select-Object Dn,IdentPoolName,Addr | where {$_.Addr -ne "derived"} | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsVnic | Sort-Object -Property Dn | Select-Object Dn,IdentPoolName,Addr | Where-Object {$_.Addr -ne "derived"} | ConvertTo-Html -Fragment
 
 	AddToOutput -txt "</div>" # end subtab
 	AddToOutput -txt "</div>" # end subtabs containers
@@ -629,7 +645,7 @@ function GenerateReport()
 
 	# Get WWNN/WWPN Pool Assignments
 	AddToOutput -txt "<h2>WWN Pool Assignments</h2>"
-	$Global:TMP_OUTPUT += Get-UcsVhba | Sort-Object -Property Addr | Select-Object Dn,IdentPoolName,NodeAddr,Addr | where {$_.NodeAddr -ne "vnic-derived"} | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsVhba | Sort-Object -Property Addr | Select-Object Dn,IdentPoolName,NodeAddr,Addr | Where-Object {$_.NodeAddr -ne "vnic-derived"} | ConvertTo-Html -Fragment
 
 	# Get WWNN/WWPN vHBA and adaptor Assignments
 	AddToOutput -txt "<h2>vHBA Details</h2>"
@@ -1009,14 +1025,14 @@ function GenerateReport()
 
 	# Maintenance policy check
 	$maintProfilesImmediate = [System.Collections.ArrayList]@()
-	$maintProfiles = Get-UcsMaintenancePolicy | where {$_.UptimeDisr -eq "immediate"} | Select-Object Name
+	$maintProfiles = Get-UcsMaintenancePolicy | Where-Object {$_.UptimeDisr -eq "immediate"} | Select-Object Name
 	foreach($prof in $maintProfiles) {
 		$maintProfilesImmediate += $prof.Name
 	}
 
 	$totalSPsImmediate = 0
 	$totalSPsImmediateProfiles = [System.Collections.ArrayList]@()
-	$maintServiceProfiles = Get-UcsServiceProfile | where {$_.AssocState -eq "associated"} | Select-Object Rn, MaintPolicyName
+	$maintServiceProfiles = Get-UcsServiceProfile | Where-Object {$_.AssocState -eq "associated"} | Select-Object Rn, MaintPolicyName
 	foreach($profile in $maintServiceProfiles)
 	{
 		if($maintProfilesImmediate -contains $profile.MaintPolicyName) {
