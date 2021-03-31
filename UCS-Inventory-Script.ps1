@@ -15,7 +15,7 @@
 # v1.1 - 30-12-2013 - Add arguments for the require input data, allow it to run as a scheduled task.
 # v1.0 - 25-11-2013 - First version; capture every bit of information from UCS Manager I could think of.
 #
-param([string]$UCSM = $null,
+param(	[string]$UCSM = $null,
 		[string]$OutFile = $null,
 		[string]$Password = $null,
 		[string]$Username = $null,
@@ -76,7 +76,9 @@ function WriteLog
 	}
 	Write-Host "[$([DateTime]::Now)] - $logstring"
 }
+### END FUNCTION ###
 
+### START FUNCTION ###
 function GenerateReport()
 {
 	Param([Parameter(Mandatory=$true)][string]$UCSM,
@@ -100,7 +102,7 @@ function GenerateReport()
 	}
 
 	# Create or empty file
-	New-Item -ItemType file $OutFile -Force | Out-Null
+	$OutFileObj = New-Item -ItemType file $OutFile -Force
 
 	# Get current date and time
 	$date = Get-Date -Format g
@@ -1117,7 +1119,7 @@ function GenerateReport()
 	if ( $SendEmail ) 
 	{ 
 		$message = New-Object Net.Mail.MailMessage
-		$attachment = New-Object Net.Mail.Attachment($OutFile)
+		$attachment = New-Object Net.Mail.Attachment($OutFileObj)
 		$smtp = New-Object Net.Mail.SmtpClient($smtpServer) 
 		$message.From = $mailFrom
 		$message.To.Add($mailTo) 
