@@ -115,6 +115,7 @@ function GenerateReport()
 
 	# Connect to the UCS
 	$ucsc = Connect-Ucs -Name $UCSM -Credential $UCSCredentials
+	$UCSMName = $ucsc.Ucs
 
 	# Test connection
 	$connected = Get-UcsPSSession
@@ -130,7 +131,7 @@ function GenerateReport()
 	AddToOutput -txt "<html>"
 	AddToOutput -txt "<head>"
 	AddToOutput -txt "<meta http-equiv='Content-Type' content='text/html; charset=utf-8' />"
-	AddToOutput -txt "<title>Cisco UCS Inventory Script - $UCSM</title>"
+	AddToOutput -txt "<title>Cisco UCS Inventory Script - $UCSMName</title>"
 	AddToOutput -txt "<style type='text/css'>"
 	AddToOutput -txt "body { font-family: 'Calibri', serif; font-size:14px; }"
 	AddToOutput -txt "div.content { border-top: #e3e3e3 solid 3px; clear: left; width: 100%; }"
@@ -174,7 +175,7 @@ function GenerateReport()
 	AddToOutput -txt "});</script>"
 	AddToOutput -txt "</head>"
 	AddToOutput -txt "<body>"
-	AddToOutput -txt "<h1>Cisco UCS Inventory Script - $UCSM</h1>"
+	AddToOutput -txt "<h1>Cisco UCS Inventory Script - $UCSMName</h1>"
 	AddToOutput -txt "Generated: "
 	$Global:TMP_OUTPUT += $date
 	AddToOutput -txt "<div id='tabs'>"
@@ -1123,7 +1124,7 @@ function GenerateReport()
 		$smtp = New-Object Net.Mail.SmtpClient($smtpServer) 
 		$message.From = $mailFrom
 		$message.To.Add($mailTo) 
-		$message.Subject = "Cisco UCS Inventory Script - $UCSM"
+		$message.Subject = "Cisco UCS Inventory Script - $UCSMName"
 		$message.Body = "Cisco UCS Inventory Script, open the attached HTML file to view the report"
 		$message.Attachments.Add($attachment) 
 		$smtp.Send($message)
