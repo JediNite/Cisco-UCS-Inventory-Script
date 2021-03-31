@@ -21,7 +21,17 @@ param([string]$UCSM = $null,
 		[string]$Username = $null,
 		[switch]$GeneratePassword,
 		[string]$CSVFile = $null,
+		[switch]$SendEmail = $null,
 		[string]$LogFile = $null)
+
+# Configure Mail Variables
+$smtpServer = "smtpserver" 
+$mailFrom = "Cisco UCS Inventory Script <ucshcheck@domain.com>"
+$mailTo = "user@domain.com"
+
+###############################################################################################
+# DO NOT UPDATE BELOW THIS LINE                                                               #
+###############################################################################################
 
 # Import the Cisco UCS PowerTool module, search for version 1 and version 2 and load which one we find
 if(!(Get-Module -ListAvailable -Name Cisco.UCSManager))
@@ -41,9 +51,8 @@ if(!(Get-Module -ListAvailable -Name Cisco.UCSManager))
 else {
 	# Load PowerTool 2.x
 	Import-Module Cisco.UCSManager
-	Write-Host "Cisco UCS PowerTool version 2.x loaded" -ForegroundColor "yellow"
+	Write-Host "Cisco UCS PowerTool version 2.x or higher loaded" -ForegroundColor "yellow"
 }
-
 
 # Generate an encrypted password from input
 if($GeneratePassword.IsPresent)
@@ -57,6 +66,7 @@ if($GeneratePassword.IsPresent)
 	exit;
 }
 
+### START FUNCTION ###
 function WriteLog
 {
 	param ([string]$logstring)
@@ -93,7 +103,7 @@ function GenerateReport()
 	New-Item -ItemType file $OutFile -Force | Out-Null
 
 	# Get current date and time
-	$date = Get-Date
+	$date = Get-Date -Format g
 
 	$Global:TMP_OUTPUT  = ""
 	Function AddToOutput($txt)
@@ -118,7 +128,7 @@ function GenerateReport()
 	AddToOutput -txt "<html>"
 	AddToOutput -txt "<head>"
 	AddToOutput -txt "<meta http-equiv='Content-Type' content='text/html; charset=utf-8' />"
-	AddToOutput -txt "<title>UCS Inventory Script</title>"
+	AddToOutput -txt "<title>Cisco UCS Inventory Script - $UCSM</title>"
 	AddToOutput -txt "<style type='text/css'>"
 	AddToOutput -txt "body { font-family: 'Calibri', serif; font-size:14px; }"
 	AddToOutput -txt "div.content { border-top: #e3e3e3 solid 3px; clear: left; width: 100%; }"
@@ -162,7 +172,7 @@ function GenerateReport()
 	AddToOutput -txt "});</script>"
 	AddToOutput -txt "</head>"
 	AddToOutput -txt "<body>"
-	AddToOutput -txt "<h1>UCS Inventory Script</h1>"
+	AddToOutput -txt "<h1>Cisco UCS Inventory Script</h1>"
 	AddToOutput -txt "Generated: "
 	$Global:TMP_OUTPUT += $date
 	AddToOutput -txt "<div id='tabs'>"
@@ -247,12 +257,12 @@ function GenerateReport()
 	# Does the system have rack servers? return those
 	if (Get-UcsRackUnit) {
 		AddToOutput -txt "<h2>Server Inventory - Rack-mounts</h2>"
-		$Global:TMP_OUTPUT += Get-UcsRackUnit | Select-Object ServerId,Model,AvailableMemory,@{N='CPUs';E={$_.NumOfCpus}},@{N='Cores';E={$_.NumOfCores}},@{N='Adaptors';E={$_.NumOfAdaptors}},@{N='eNICs';E={$_.NumOfEthHostIfs}},@{N='fNICs';E={$_.NumOfFcHostIfs}},AssignedToDn,OperPower,Serial | Sort-Object { [int]$_.ServerId } | ConvertTo-Html -Fragment
+		$Global:TMP_OUTPUT += Get-UcsRackUnit | Select-Object Dn,ServerId,Model,AvailableMemory,@{N='CPUs';E={$_.NumOfCpus}},@{N='Cores';E={$_.NumOfCores}},@{N='Adaptors';E={$_.NumOfAdaptors}},@{N='eNICs';E={$_.NumOfEthHostIfs}},@{N='fNICs';E={$_.NumOfFcHostIfs}},AssignedToDn,OperPower,Serial | Sort-Object { [int]$_.ServerId } | ConvertTo-Html -Fragment
 	}
 
 	# Get server adaptor (mezzanine card) info
 	AddToOutput -txt "<h2>Server Adaptor Inventory</h2>"
-	$Global:TMP_OUTPUT += Get-UcsAdaptorUnit | Sort-Object -Property Dn | Select-Object ChassisId,BladeId,Rn,Model | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsAdaptorUnit | Sort-Object -Property Dn | Select-Object Dn,ChassisId,BladeId,Rn,Model | ConvertTo-Html -Fragment
 
 	# Get server adaptor port expander info
 	AddToOutput -txt "<h2>Servers with Adaptor Port Expanders</h2>"
@@ -268,11 +278,11 @@ function GenerateReport()
 
 	# Get server storage controller info
 	AddToOutput -txt "<h2>Server Storage Controller Inventory</h2>"
-	$Global:TMP_OUTPUT += Get-UcsStorageController | Sort-Object -Property Dn | Select-Object Vendor,Model | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsStorageController | Sort-Object -Property Dn | Select-Object Dn,Vendor,Model | ConvertTo-Html -Fragment
 
 	# Get server local disk info
 	AddToOutput -txt "<h2>Server Local Disk Inventory</h2>"
-	$Global:TMP_OUTPUT += Get-UcsStorageLocalDisk | Sort-Object -Property Dn | Select-Object Dn,Model,Size,Serial | Where-Object {$_.Size -ne "unknown"}  | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsStorageLocalDisk | Sort-Object -Property Dn | Select-Object Dn,Model,Size,Serial,DeviceVersion | Where-Object {$_.Size -ne "unknown"}  | ConvertTo-Html -Fragment
 
 	AddToOutput -txt "</div>" # end subtab
 	AddToOutput -txt "<div class='content-sub' id='equipment-tab-firmware'>"
@@ -295,7 +305,7 @@ function GenerateReport()
 	
 	# Get Server BIOS versions
 	AddToOutput -txt "<h2>Server BIOS</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version | Sort-Object -Property Dn | Where-Object {$_.Type -eq "blade-bios" -Or $_.Type -eq "rack-bios"} | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "blade-bios" -Or $_.Type -eq "rack-bios"} | ConvertTo-Html -Fragment
 
 	# Get Server Board Controller firmware
 	AddToOutput -txt "<h2>Server Board</h2>"
@@ -1103,8 +1113,23 @@ function GenerateReport()
 	# Disconnect
 	Disconnect-Ucs
 
+	# Send Email if required
+	if ( $SendEmail ) 
+	{ 
+		$message = New-Object Net.Mail.MailMessage
+		$attachment = New-Object Net.Mail.Attachment($OutFile)
+		$smtp = New-Object Net.Mail.SmtpClient($smtpServer) 
+		$message.From = $mailFrom
+		$message.To.Add($mailTo) 
+		$message.Subject = "Cisco UCS Inventory Script - $UCSM"
+		$message.Body = "Cisco UCS Inventory Script, open the attached HTML file to view the report"
+		$message.Attachments.Add($attachment) 
+		$smtp.Send($message)
+	}
+
 	WriteLog "Done generating report for $UCSM"
 }
+### END FUNCTION ###
 
 WriteLog "Starting Cisco UCS Inventory Script (UIS).."
 
