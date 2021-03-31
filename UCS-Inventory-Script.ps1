@@ -174,7 +174,7 @@ function GenerateReport()
 	AddToOutput -txt "});</script>"
 	AddToOutput -txt "</head>"
 	AddToOutput -txt "<body>"
-	AddToOutput -txt "<h1>Cisco UCS Inventory Script</h1>"
+	AddToOutput -txt "<h1>Cisco UCS Inventory Script - $UCSM</h1>"
 	AddToOutput -txt "Generated: "
 	$Global:TMP_OUTPUT += $date
 	AddToOutput -txt "<div id='tabs'>"
