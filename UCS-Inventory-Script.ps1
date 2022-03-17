@@ -1,19 +1,21 @@
 #
-#	Cisco UCS Inventory Script (UIS) - v1.3 (17-04-2016)
+#	Cisco UCS Inventory Script (UIS) - v1.6 (17-03-2022)
 #	 Martijn Smit <martijn@lostdomain.org>
+#	 Jason Gersekowski <gersekow@hotmail.com>
 #
 #	- Grab all information from a UCS Manager and output it to a file.
 #	- Useful for post-implementation info dumps and scheduled checks
 #
-#	Usage: .\UCS-Inventory-Script-v1.2.ps1 -UCS <IP or hostname UCS Manager> [-OutFile <report.html>] [[-Password <passwd>] [-Username <user>]]
+#	Usage: .\UCS-Inventory-Script.ps1 -UCS <IP or hostname UCS Manager> [-OutFile <report.html>] [[-Password <passwd>] [-Username <user>]] [-GeneratePassword] [-CSVFile <csvfile.csv>] [-SendEmail $True | $False ] [-LogFile <output.log>]
 #
 #   - If Username or Password parameter are omitted, the script will prompt for manual credentials
 #
-# v1.3 - 17-04-2016 - Added multiple UCS Manager support via a CSV file and logging to a file.
-# v1.2 - 30-06-2014 - Added a recommendations tab for configuration and health recommendations,
+# v1.6 (JG) - 17-03-2022 - Added Email capability, Added Package Versions to Firmware releases
+# v1.3 (MS) - 17-04-2016 - Added multiple UCS Manager support via a CSV file and logging to a file.
+# v1.2 (MS) - 30-06-2014 - Added a recommendations tab for configuration and health recommendations,
 #                     taken from experience in the field.
-# v1.1 - 30-12-2013 - Add arguments for the require input data, allow it to run as a scheduled task.
-# v1.0 - 25-11-2013 - First version; capture every bit of information from UCS Manager I could think of.
+# v1.1 (MS) - 30-12-2013 - Add arguments for the require input data, allow it to run as a scheduled task.
+# v1.0 (MS) - 25-11-2013 - First version; capture every bit of information from UCS Manager I could think of.
 #
 param(	[string]$UCSM = $null,
 		[string]$OutFile = $null,
@@ -255,12 +257,12 @@ function GenerateReport()
 	# Does the system have blade servers? return those
 	if (Get-UcsBlade) {
 		AddToOutput -txt "<h2>Server Inventory - Blades</h2>"
-		$Global:TMP_OUTPUT += Get-UcsBlade | Select-Object ServerId,Model,AvailableMemory,@{N='CPUs';E={$_.NumOfCpus}},@{N='Cores';E={$_.NumOfCores}},@{N='Adaptors';E={$_.NumOfAdaptors}},@{N='eNICs';E={$_.NumOfEthHostIfs}},@{N='fNICs';E={$_.NumOfFcHostIfs}},AssignedToDn,OperPower,Serial | Sort-Object -Property ChassisID,SlotID | ConvertTo-Html -Fragment
+		$Global:TMP_OUTPUT += Get-UcsBlade | Select-Object Dn,Usrlbl,ServerId,Model,AvailableMemory,@{N='CPUs';E={$_.NumOfCpus}},@{N='Cores';E={$_.NumOfCores}},@{N='Adaptors';E={$_.NumOfAdaptors}},@{N='eNICs';E={$_.NumOfEthHostIfs}},@{N='fNICs';E={$_.NumOfFcHostIfs}},AssignedToDn,OperPower,Serial | Sort-Object -Property Dn | ConvertTo-Html -Fragment
 	}
 	# Does the system have rack servers? return those
 	if (Get-UcsRackUnit) {
 		AddToOutput -txt "<h2>Server Inventory - Rack-mounts</h2>"
-		$Global:TMP_OUTPUT += Get-UcsRackUnit | Select-Object Dn,ServerId,Model,AvailableMemory,@{N='CPUs';E={$_.NumOfCpus}},@{N='Cores';E={$_.NumOfCores}},@{N='Adaptors';E={$_.NumOfAdaptors}},@{N='eNICs';E={$_.NumOfEthHostIfs}},@{N='fNICs';E={$_.NumOfFcHostIfs}},AssignedToDn,OperPower,Serial | Sort-Object { [int]$_.ServerId } | ConvertTo-Html -Fragment
+		$Global:TMP_OUTPUT += Get-UcsRackUnit | Select-Object Dn,Usrlbl,ServerId,Model,AvailableMemory,@{N='CPUs';E={$_.NumOfCpus}},@{N='Cores';E={$_.NumOfCores}},@{N='Adaptors';E={$_.NumOfAdaptors}},@{N='eNICs';E={$_.NumOfEthHostIfs}},@{N='fNICs';E={$_.NumOfFcHostIfs}},AssignedToDn,OperPower,Serial | Sort-Object { [int]$_.ServerId } | ConvertTo-Html -Fragment
 	}
 
 	# Get server adaptor (mezzanine card) info
@@ -1111,7 +1113,7 @@ function GenerateReport()
 	$Global:TMP_OUTPUT | Out-File $OutFile
 
 	# Open html file
-	Invoke-Item $OutFile
+#	Invoke-Item $OutFile
 
 	# Disconnect
 	Disconnect-Ucs
