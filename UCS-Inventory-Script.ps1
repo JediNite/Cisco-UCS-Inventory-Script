@@ -1,5 +1,5 @@
 #
-#	Cisco UCS Inventory Script (UIS) - v1.6 (17-03-2022)
+#	Cisco UCS Inventory Script (UIS) - v1.7 (17-03-2022)
 #	 Martijn Smit <martijn@lostdomain.org>
 #	 Jason Gersekowski <gersekow@hotmail.com>
 #
@@ -10,7 +10,7 @@
 #
 #   - If Username or Password parameter are omitted, the script will prompt for manual credentials
 #
-# v1.6 (JG) - 17-03-2022 - Added Email capability, Added Package Versions to Firmware releases
+# v1.6 (JG) - 17-03-2022 - Added Email capability, Added Package Versions to Firmware releases, Cleaned up use of ConvertTo-Html
 # v1.3 (MS) - 17-04-2016 - Added multiple UCS Manager support via a CSV file and logging to a file.
 # v1.2 (MS) - 30-06-2014 - Added a recommendations tab for configuration and health recommendations,
 #                     taken from experience in the field.
@@ -209,45 +209,35 @@ function GenerateReport()
 	AddToOutput -txt "<div class='content-sub' id='equipment-tab-fi'>"
 
 	# Get Fabric Interconnects
-	AddToOutput -txt "<h2>Fabric Interconnects</h2>"
-	$Global:TMP_OUTPUT += Get-UcsNetworkElement | Select-Object Ucs,Rn,OobIfIp,OobIfMask,OobIfGw,Operability,Model,Serial | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsNetworkElement | Select-Object Ucs,Rn,OobIfIp,OobIfMask,OobIfGw,Operability,Model,Serial | ConvertTo-Html -Fragment -PreContent "<h2>Fabric Interconnects</h2>"
 
 	# Get Fabric Interconnect inventory
-	AddToOutput -txt "<h2>Fabric Interconnect Inventory</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFiModule | Sort-Object -Property Dn | Select-Object Dn,Model,Descr,OperState,State,Serial | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsFiModule | Sort-Object -Property Dn | Select-Object Dn,Model,Descr,OperState,State,Serial | ConvertTo-Html -Fragment -PreContent "<h2>Fabric Interconnect Inventory</h2>"
 
 	# Get Cluster State
-	AddToOutput -txt "<h2>Cluster Status</h2>"
-	$Global:TMP_OUTPUT += Get-UcsStatus | Select-Object Name,VirtualIpv4Address,HaConfiguration,HaReadiness,HaReady,EthernetState | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsStatus | Select-Object FiALeadership,FiAOobIpv4Address,FiAManagementServicesState | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsStatus | Select-Object FiBLeadership,FiBOobIpv4Address,FiBManagementServicesState | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsStatus | Select-Object Name,VirtualIpv4Address,HaConfiguration,HaReadiness,HaReady,EthernetState | ConvertTo-Html -Fragment -PreContent "<h2>Cluster Status</h2>"
+	$Global:TMP_OUTPUT += Get-UcsStatus | Select-Object FiALeadership,FiAOobIpv4Address,FiAManagementServicesState | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsStatus | Select-Object FiBLeadership,FiBOobIpv4Address,FiBManagementServicesState | ConvertTo-Html -Fragment -PreContent "<br />"
 
 	AddToOutput -txt "</div>"
 	AddToOutput -txt "<div class='content-sub' id='equipment-tab-chassis'>"
 
 	# Get Chassis info
-	AddToOutput -txt "<h2>Chassis Inventory</h2>"
-	$Global:TMP_OUTPUT += Get-UcsChassis | Sort-Object -Property Rn | Select-Object Rn,AdminState,Model,OperState,LicState,Power,Thermal,Serial | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsChassis | Sort-Object -Property Rn | Select-Object Rn,AdminState,Model,OperState,LicState,Power,Thermal,Serial | ConvertTo-Html -Fragment -PreContent "<h2>Chassis Inventory</h2>"
 
 	# Get chassis IOM info
-	AddToOutput -txt "<h2>IOM Inventory</h2>"
-	$Global:TMP_OUTPUT += Get-UcsIom | Sort-Object -Property Dn | Select-Object ChassisId,Rn,Model,Discovery,ConfigState,OperState,Side,Thermal,Serial | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsIom | Sort-Object -Property Dn | Select-Object ChassisId,Rn,Model,Discovery,ConfigState,OperState,Side,Thermal,Serial | ConvertTo-Html -Fragment -PreContent "<h2>IOM Inventory</h2>"
 
 	# Get Fabric Interconnect to Chassis port mapping
-	AddToOutput -txt "<h2>Fabric Interconnect to IOM Connections</h2>"
-	$Global:TMP_OUTPUT += Get-UcsEtherSwitchIntFIo | Select-Object ChassisId,Discovery,Model,OperState,SwitchId,PeerSlotId,PeerPortId,SlotId,PortId,XcvrType | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsEtherSwitchIntFIo | Select-Object ChassisId,Discovery,Model,OperState,SwitchId,PeerSlotId,PeerPortId,SlotId,PortId,XcvrType | ConvertTo-Html -Fragment -PreContent "<h2>Fabric Interconnect to IOM Connections</h2>"
 
 	# Get Global chassis discovery policy
 	$chassisDiscoveryPolicy = Get-UcsChassisDiscoveryPolicy | Select-Object Rn,LinkAggregationPref,Action
-	AddToOutput -txt "<h2>Chassis Discovery Policy</h2>"
-	$Global:TMP_OUTPUT += $chassisDiscoveryPolicy | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += $chassisDiscoveryPolicy | ConvertTo-Html -Fragment -PreContent "<h2>Chassis Discovery Policy</h2>"
 
 	# Get Global chassis power redundancy policy
 	$chassisPowerRedPolicy = Get-UcsPowerControlPolicy
-	AddToOutput -txt "<h2>Chassis Power Redundancy Policy</h2>"
-	$Global:TMP_OUTPUT += $chassisPowerRedPolicy | Select-Object Rn,Redundancy | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += $chassisPowerRedPolicy | Select-Object Rn,Redundancy | ConvertTo-Html -Fragment -PreContent "<h2>Chassis Power Redundancy Policy</h2>"
 
 	AddToOutput -txt "</div>" # end subtab
 	AddToOutput -txt "<div class='content-sub' id='equipment-tab-servers'>"
@@ -256,85 +246,67 @@ function GenerateReport()
 
 	# Does the system have blade servers? return those
 	if (Get-UcsBlade) {
-		AddToOutput -txt "<h2>Server Inventory - Blades</h2>"
-		$Global:TMP_OUTPUT += Get-UcsBlade | Select-Object Dn,Usrlbl,ServerId,Model,AvailableMemory,@{N='CPUs';E={$_.NumOfCpus}},@{N='Cores';E={$_.NumOfCores}},@{N='Adaptors';E={$_.NumOfAdaptors}},@{N='eNICs';E={$_.NumOfEthHostIfs}},@{N='fNICs';E={$_.NumOfFcHostIfs}},AssignedToDn,OperPower,Serial | Sort-Object -Property Dn | ConvertTo-Html -Fragment
+		$Global:TMP_OUTPUT += Get-UcsBlade | Select-Object Dn,Usrlbl,ServerId,Model,AvailableMemory,@{N='CPUs';E={$_.NumOfCpus}},@{N='Cores';E={$_.NumOfCores}},@{N='Adaptors';E={$_.NumOfAdaptors}},@{N='eNICs';E={$_.NumOfEthHostIfs}},@{N='fNICs';E={$_.NumOfFcHostIfs}},AssignedToDn,OperPower,Serial | Sort-Object -Property Dn | ConvertTo-Html -Fragment -PreContent "<h2>Server Inventory - Blades</h2>"
 	}
 	# Does the system have rack servers? return those
 	if (Get-UcsRackUnit) {
-		AddToOutput -txt "<h2>Server Inventory - Rack-mounts</h2>"
-		$Global:TMP_OUTPUT += Get-UcsRackUnit | Select-Object Dn,Usrlbl,ServerId,Model,AvailableMemory,@{N='CPUs';E={$_.NumOfCpus}},@{N='Cores';E={$_.NumOfCores}},@{N='Adaptors';E={$_.NumOfAdaptors}},@{N='eNICs';E={$_.NumOfEthHostIfs}},@{N='fNICs';E={$_.NumOfFcHostIfs}},AssignedToDn,OperPower,Serial | Sort-Object { [int]$_.ServerId } | ConvertTo-Html -Fragment
+		$Global:TMP_OUTPUT += Get-UcsRackUnit | Select-Object Dn,Usrlbl,ServerId,Model,AvailableMemory,@{N='CPUs';E={$_.NumOfCpus}},@{N='Cores';E={$_.NumOfCores}},@{N='Adaptors';E={$_.NumOfAdaptors}},@{N='eNICs';E={$_.NumOfEthHostIfs}},@{N='fNICs';E={$_.NumOfFcHostIfs}},AssignedToDn,OperPower,Serial | Sort-Object { [int]$_.ServerId } | ConvertTo-Html -Fragment -PreContent "<h2>Server Inventory - Rack-mounts</h2>"
 	}
 
 	# Get server adaptor (mezzanine card) info
-	AddToOutput -txt "<h2>Server Adaptor Inventory</h2>"
-	$Global:TMP_OUTPUT += Get-UcsAdaptorUnit | Sort-Object -Property Dn | Select-Object Dn,ChassisId,BladeId,Rn,Model | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsAdaptorUnit | Sort-Object -Property Dn | Select-Object Dn,ChassisId,BladeId,Rn,Model | ConvertTo-Html -Fragment -PreContent "<h2>Server Adaptor Inventory</h2>"
 
 	# Get server adaptor port expander info
-	AddToOutput -txt "<h2>Servers with Adaptor Port Expanders</h2>"
-	$Global:TMP_OUTPUT += Get-UcsAdaptorUnitExtn | Sort-Object -Property Dn | Select-Object Dn,Model,Presence | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsAdaptorUnitExtn | Sort-Object -Property Dn | Select-Object Dn,Model,Presence | ConvertTo-Html -Fragment -PreContent "<h2>Servers with Adaptor Port Expanders</h2>"
 
 	# Get server processor info
-	AddToOutput -txt "<h2>Server CPU Inventory</h2>"
-	$Global:TMP_OUTPUT += Get-UcsProcessorUnit | Sort-Object -Property Dn | Select-Object Dn,SocketDesignation,Cores,CoresEnabled,Threads,Speed,OperState,Thermal,Model | Where-Object {$_.OperState -ne "removed"} | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsProcessorUnit | Sort-Object -Property Dn | Select-Object Dn,SocketDesignation,Cores,CoresEnabled,Threads,Speed,OperState,Thermal,Model | Where-Object {$_.OperState -ne "removed"} | ConvertTo-Html -Fragment -PreContent "<h2>Server CPU Inventory</h2>"
 
 	# Get server memory info
-	AddToOutput -txt "<h2>Server Memory Inventory</h2>"
-	$Global:TMP_OUTPUT += Get-UcsMemoryUnit | Sort-Object -Property Dn,Location | Where-Object {$_.Capacity -ne "unspecified"} | Select-Object -Property Dn,Location,Capacity,Clock,OperState,Model | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsMemoryUnit | Sort-Object -Property Dn,Location | Where-Object {$_.Capacity -ne "unspecified"} | Select-Object -Property Dn,Location,Capacity,Clock,OperState,Model | ConvertTo-Html -Fragment -PreContent "<h2>Server Memory Inventory</h2>"
 
 	# Get server storage controller info
-	AddToOutput -txt "<h2>Server Storage Controller Inventory</h2>"
-	$Global:TMP_OUTPUT += Get-UcsStorageController | Sort-Object -Property Dn | Select-Object Dn,Vendor,Model | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsStorageController | Sort-Object -Property Dn | Select-Object Dn,Vendor,Model | ConvertTo-Html -Fragment -PreContent "<h2>Server Storage Controller Inventory</h2>"
 
 	# Get server local disk info
-	AddToOutput -txt "<h2>Server Local Disk Inventory</h2>"
-	$Global:TMP_OUTPUT += Get-UcsStorageLocalDisk | Sort-Object -Property Dn | Select-Object Dn,Model,Size,Serial,DeviceVersion | Where-Object {$_.Size -ne "unknown"}  | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsStorageLocalDisk | Sort-Object -Property Dn | Select-Object Dn,Model,Size,Serial,DeviceVersion | Where-Object {$_.Size -ne "unknown"}  | ConvertTo-Html -Fragment -PreContent "<h2>Server Local Disk Inventory</h2>"
 
 	AddToOutput -txt "</div>" # end subtab
 	AddToOutput -txt "<div class='content-sub' id='equipment-tab-firmware'>"
 
 	# Get UCSM firmware version
-	AddToOutput -txt "<h2>UCS Manager</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "system"} | ConvertTo-Html -Fragment
+
+	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "system"} | ConvertTo-Html -Fragment -PreContent "<h2>UCS Manager</h2>"
 
 	# Get Fabric Interconnect firmware
-	AddToOutput -txt "<h2>Fabric Interconnect</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "switch-kernel" -OR $_.Type -eq "switch-software"} | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "switch-kernel" -OR $_.Type -eq "switch-software"} | ConvertTo-Html -Fragment -PreContent "<h2>Fabric Interconnect</h2>"
 
 	# Get IOM firmware
-	AddToOutput -txt "<h2>IOM</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "iocard"} | Where-Object -FilterScript {$_.Deployment -notlike "boot-loader"} | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "iocard"} | Where-Object -FilterScript {$_.Deployment -notlike "boot-loader"} | ConvertTo-Html -Fragment -PreContent "<h2>IOM</h2>"
 
 	# Get Server CIMC firmware
-	AddToOutput -txt "<h2>Server CIMC</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "blade-controller"} | Where-Object -FilterScript {$_.Deployment -notlike "boot-loader"} | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "blade-controller"} | Where-Object -FilterScript {$_.Deployment -notlike "boot-loader"} | ConvertTo-Html -Fragment -PreContent "<h2>Server CIMC</h2>"
 	
 	# Get Server BIOS versions
-	AddToOutput -txt "<h2>Server BIOS</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "blade-bios" -Or $_.Type -eq "rack-bios"} | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "blade-bios" -Or $_.Type -eq "rack-bios"} | ConvertTo-Html -Fragment -PreContent "<h2>Server BIOS</h2>"
 
 	# Get Server Board Controller firmware
-	AddToOutput -txt "<h2>Server Board</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "board-controller"} | Where-Object -FilterScript {$_.Deployment -notlike "boot-loader"} | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "board-controller"} | Where-Object -FilterScript {$_.Deployment -notlike "boot-loader"} | ConvertTo-Html -Fragment -PreContent "<h2>Server Board</h2>"
 
 	# Get Server Adapter firmware
-	AddToOutput -txt "<h2>Server Adapters</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "adaptor"} | Where-Object -FilterScript {$_.Deployment -notlike "boot-loader"} | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "adaptor"} | Where-Object -FilterScript {$_.Deployment -notlike "boot-loader"} | ConvertTo-Html -Fragment -PreContent "<h2>Server Adapters</h2>"
 	
 	# Get FlexFlash Controller firmware
-	AddToOutput -txt "<h2>FlexFlash Controllers</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "flexflash-controller"} | Where-Object -FilterScript {$_.Deployment -notlike "boot-loader"} | ConvertTo-Html -Fragment	
+	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "flexflash-controller"} | Where-Object -FilterScript {$_.Deployment -notlike "boot-loader"} | ConvertTo-Html -Fragment -PreContent "<h2>FlexFlash Controllers</h2>"
 	
 	# Get Server Disk firmware
-	AddToOutput -txt "<h2>Server Local Disks</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "local-disk"} | ConvertTo-Html -Fragment	
+	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "local-disk"} | ConvertTo-Html -Fragment -PreContent "<h2>Server Local Disks</h2>"
 
 	# Get SAS Expander firmware
-	AddToOutput -txt "<h2>SAS Adapters</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "sas-exp"} | ConvertTo-Html -Fragment	
+	$Global:TMP_OUTPUT += Get-UcsFirmwareRunning | Select-Object Deployment,Dn,Type,Version,PackageVersion | Sort-Object -Property Dn | Where-Object {$_.Type -eq "sas-exp"} | ConvertTo-Html -Fragment	-PreContent "<h2>SAS Adapters</h2>"
 
 	# Get Host Firmware Packages
-	AddToOutput -txt "<h2>Host Firmware Packages</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFirmwareComputeHostPack | Select-Object Dn,Name,BladeBundleVersion,RackBundleVersion | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsFirmwareComputeHostPack | Select-Object Dn,Name,BladeBundleVersion,RackBundleVersion | ConvertTo-Html -Fragment -PreContent "<h2>Host Firmware Packages</h2>"
 
 	AddToOutput -txt "</div>" # end subtab
 	AddToOutput -txt "</div>" # end subtabs container
@@ -356,135 +328,88 @@ function GenerateReport()
 	AddToOutput -txt "<div class='content-sub' id='server-config-tab-sp'>"
 
 	# Get Service Profile Templates
-	AddToOutput -txt "<h2>Service Profile Templates</h2>"
-	$Global:TMP_OUTPUT += Get-UcsServiceProfile | Where-object {$_.Type -ne "instance"}  | Sort-object -Property Name | Select-Object Dn,Name,BiosProfileName,BootPolicyName,HostFwPolicyName,LocalDiskPolicyName,MaintPolicyName,VconProfileName | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsServiceProfile | Where-object {$_.Type -ne "instance"}  | Sort-object -Property Name | Select-Object Dn,Name,BiosProfileName,BootPolicyName,HostFwPolicyName,LocalDiskPolicyName,MaintPolicyName,VconProfileName | ConvertTo-Html -Fragment -PreContent "<h2>Service Profile Templates</h2>"
 
 	# Get Service Profiles
-	AddToOutput -txt "<h2>Service Profiles</h2>"
-	$Global:TMP_OUTPUT += Get-UcsServiceProfile | Where-object {$_.Type -eq "instance"}  | Sort-object -Property Name | Select-Object Dn,Name,OperSrcTemplName,AssocState,PnDn,BiosProfileName,IdentPoolName,Uuid,BootPolicyName,HostFwPolicyName,LocalDiskPolicyName,MaintPolicyName,VconProfileName,OperState | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsServiceProfile | Where-object {$_.Type -eq "instance"}  | Sort-object -Property Name | Select-Object Dn,Name,OperSrcTemplName,AssocState,PnDn,BiosProfileName,IdentPoolName,Uuid,BootPolicyName,HostFwPolicyName,LocalDiskPolicyName,MaintPolicyName,VconProfileName,OperState | ConvertTo-Html -Fragment -PreContent "<h2>Service Profiles</h2>"
 
 	AddToOutput -txt "</div>" # end subtab
 	AddToOutput -txt "<div class='content-sub' id='server-config-tab-policies'>"
 
 	# Get Maintenance Policies
-	AddToOutput -txt "<h2>Maintenance Policies</h2>"
-	$Global:TMP_OUTPUT += Get-UcsMaintenancePolicy | Select-Object Name,Dn,UptimeDisr,Descr | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsMaintenancePolicy | Select-Object Name,Dn,UptimeDisr,Descr | ConvertTo-Html -Fragment -PreContent "<h2>Maintenance Policies</h2>"
 
 	# Get Boot Policies
-	AddToOutput -txt "<h2>Boot Policies</h2>"
-	$Global:TMP_OUTPUT += Get-UcsBootPolicy | sort-object -Property Dn | Select-Object Dn,Name,Purpose,RebootOnUpdate | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsBootPolicy | sort-object -Property Dn | Select-Object Dn,Name,Purpose,RebootOnUpdate | ConvertTo-Html -Fragment -PreContent "<h2>Boot Policies</h2>"
 
 	# Get SAN Boot Policies
-	AddToOutput -txt "<h2>SAN Boot Policies</h2>"
-	$Global:TMP_OUTPUT += Get-UcsLsbootSanImagePath | sort-object -Property Dn | Select-Object Dn,Type,Vnicname,Lun,Wwn | Where-Object -FilterScript {$_.Dn -notlike "sys/chassis*"} | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsLsbootSanImagePath | sort-object -Property Dn | Select-Object Dn,Type,Vnicname,Lun,Wwn | Where-Object -FilterScript {$_.Dn -notlike "sys/chassis*"} | ConvertTo-Html -Fragment -PreContent "<h2>SAN Boot Policies</h2>"
 
 	# Get Local Disk Policies
-	AddToOutput -txt "<h2>Local Disk Policies</h2>"
-	$Global:TMP_OUTPUT += Get-UcsLocalDiskConfigPolicy | Select-Object Dn,Name,Mode,Descr | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsLocalDiskConfigPolicy | Select-Object Dn,Name,Mode,Descr | ConvertTo-Html -Fragment -PreContent "<h2>Local Disk Policies</h2>"
 
 	# Get Scrub Policies
-	AddToOutput -txt "<h2>Scrub Policies</h2>"
-	$Global:TMP_OUTPUT += Get-UcsScrubPolicy | Select-Object Dn,Name,BiosSettingsScrub,DiskScrub | Where-Object {$_.Name -ne "policy"} | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsScrubPolicy | Select-Object Dn,Name,BiosSettingsScrub,DiskScrub | Where-Object {$_.Name -ne "policy"} | ConvertTo-Html -Fragment -PreContent "<h2>Scrub Policies</h2>"
 
 	# Get BIOS Policies
-	AddToOutput -txt "<h2>BIOS Policies</h2>"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"} | Select-Object Dn,Name | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"} | Select-Object Dn,Name | ConvertTo-Html -Fragment -PreContent "<h2>BIOS Policies</h2>"
 
 	# Get BIOS Policy Settings
-	AddToOutput -txt "<h2>BIOS Policy Settings</h2>"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfQuietBoot | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfPOSTErrorPause | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfResumeOnACPowerLoss | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfFrontPanelLockout | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosTurboBoost | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosEnhancedIntelSpeedStep | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosHyperThreading | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfCoreMultiProcessing | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosExecuteDisabledBit | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfIntelVirtualizationTechnology | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfDirectCacheAccess | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfProcessorCState | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfProcessorC1E | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfProcessorC3Report | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfProcessorC6Report | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfProcessorC7Report | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfCPUPerformance | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfMaxVariableMTRRSetting | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosIntelDirectedIO | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfSelectMemoryRASConfiguration | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosNUMA | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosLvDdrMode | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfUSBBootConfig | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfUSBFrontPanelAccessLock | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfUSBSystemIdlePowerOptimizingSetting | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfMaximumMemoryBelow4GB | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfMemoryMappedIOAbove4GB | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfBootOptionRetry | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfIntelEntrySASRAIDModule | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
-	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfOSBootWatchdogTimer | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment
-	AddToOutput -txt "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfQuietBoot | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<h2>BIOS Policy Settings</h2>"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfPOSTErrorPause | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfResumeOnACPowerLoss | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfFrontPanelLockout | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent  "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosTurboBoost | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosEnhancedIntelSpeedStep | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosHyperThreading | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfCoreMultiProcessing | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosExecuteDisabledBit | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfIntelVirtualizationTechnology | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfDirectCacheAccess | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfProcessorCState | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfProcessorC1E | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfProcessorC3Report | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfProcessorC6Report | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfProcessorC7Report | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfCPUPerformance | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfMaxVariableMTRRSetting | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosIntelDirectedIO | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfSelectMemoryRASConfiguration | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosNUMA | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosLvDdrMode | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfUSBBootConfig | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfUSBFrontPanelAccessLock | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfUSBSystemIdlePowerOptimizingSetting | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfMaximumMemoryBelow4GB | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfMemoryMappedIOAbove4GB | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfBootOptionRetry | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfIntelEntrySASRAIDModule | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />"
+	$Global:TMP_OUTPUT += Get-UcsBiosPolicy | Where-Object {$_.Name -ne "SRIOV"}  | Get-UcsBiosVfOSBootWatchdogTimer | Sort-Object Dn | Select-Object Dn,Vp* | ConvertTo-Html -Fragment -PreContent "<br />" -PostContent "<br />"
 
 	# Get Service Profiles vNIC/vHBA Assignments
-	AddToOutput -txt "<h2>Service Profile vNIC Placements</h2>"
-	$Global:TMP_OUTPUT += Get-UcsLsVConAssign -Transport ethernet | Select-Object Dn,Vnicname,Adminvcon,Order | Sort-Object Dn | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsLsVConAssign -Transport ethernet | Select-Object Dn,Vnicname,Adminvcon,Order | Sort-Object Dn | ConvertTo-Html -Fragment -PreContent "<h2>Service Profile vNIC Placements</h2>"
 
 	# Get Ethernet VLAN to vNIC Mappings #
-	AddToOutput -txt "<h2>Ethernet VLAN to vNIC Mappings</h2>"
-	$Global:TMP_OUTPUT += Get-UcsAdaptorVlan | sort-object Dn |Select-Object Dn,Name,Id,SwitchId | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsAdaptorVlan | sort-object Dn |Select-Object Dn,Name,Id,SwitchId | ConvertTo-Html -Fragment -PreContent "<h2>Ethernet VLAN to vNIC Mappings</h2>"
 
 	AddToOutput -txt "</div>" # end subtab
 	AddToOutput -txt "<div class='content-sub' id='server-config-tab-pools'>"
 
 	# Get UUID Suffix Pools
-	AddToOutput -txt "<h2>UUID Pools</h2>"
-	$Global:TMP_OUTPUT += Get-UcsUuidSuffixPool | Select-Object Dn,Name,AssignmentOrder,Prefix,Size,Assigned | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsUuidSuffixPool | Select-Object Dn,Name,AssignmentOrder,Prefix,Size,Assigned | ConvertTo-Html -Fragment -PreContent "<h2>UUID Pools</h2>"
 
 	# Get UUID Suffix Pool Blocks
-	AddToOutput -txt "<h2>UUID Pool Blocks</h2>"
-	$Global:TMP_OUTPUT += Get-UcsUuidSuffixBlock | Select-Object Dn,From,To | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsUuidSuffixBlock | Select-Object Dn,From,To | ConvertTo-Html -Fragment -PreContent "<h2>UUID Pool Blocks</h2>"
 
 	# Get UUID UUID Pool Assignments
-	AddToOutput -txt "<h2>UUID Pool Assignments</h2>"
-	$Global:TMP_OUTPUT += Get-UcsUuidpoolAddr | Where-Object {$_.Assigned -ne "no"} | select-object AssignedToDn,Id | sort-object -property AssignedToDn | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsUuidpoolAddr | Where-Object {$_.Assigned -ne "no"} | select-object AssignedToDn,Id | sort-object -property AssignedToDn | ConvertTo-Html -Fragment -PreContent "<h2>UUID Pool Assignments</h2>"
 
 	# Get Server Pools
-	AddToOutput -txt "<h2>Server Pools</h2>"
-	$Global:TMP_OUTPUT += Get-UcsServerPool | Select-Object Dn,Name,Assigned | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsServerPool | Select-Object Dn,Name,Assigned | ConvertTo-Html -Fragment -PreContent "<h2>Server Pools</h2>"
 
 	# Get Server Pool Assignments
-	AddToOutput -txt "<h2>Server Pool Assignments</h2>"
-	$Global:TMP_OUTPUT += Get-UcsComputePooledSlot | Select-Object Dn,Rn | ConvertTo-Html -Fragment
-	$Global:TMP_OUTPUT += "<br />"
-	$Global:TMP_OUTPUT += Get-UcsComputePooledRackUnit | Select-Object Dn,PoolableDn | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsComputePooledSlot | Select-Object Dn,Rn | ConvertTo-Html -Fragment -PreContent "<h2>Server Pool Assignments</h2>"
+	$Global:TMP_OUTPUT += Get-UcsComputePooledRackUnit | Select-Object Dn,PoolableDn | ConvertTo-Html -Fragment -PreContent "<br />"
 
 	AddToOutput -txt "</div>" # end subtab
 	AddToOutput -txt "</div>" # end subtabs container
@@ -508,79 +433,62 @@ function GenerateReport()
 	AddToOutput -txt "<div class='content-sub' id='lan-config-tab-lan'>"
 
 	# Get LAN Switching Mode
-	AddToOutput -txt "<h2>Fabric Interconnect Ethernet Switching Mode</h2>"
-	$Global:TMP_OUTPUT += Get-UcsLanCloud | Select-Object Rn,Mode | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsLanCloud | Select-Object Rn,Mode | ConvertTo-Html -Fragment -PreContent "<h2>Fabric Interconnect Ethernet Switching Mode</h2>"
 
 	# Get Fabric Interconnect Ethernet port usage and role info
-	AddToOutput -txt "<h2>Fabric Interconnect Ethernet Port Configuration</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFabricPort | Select-Object Dn,IfRole,LicState,Mode,OperState,OperSpeed,XcvrType | Where-Object {$_.OperState -eq "up"} | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsFabricPort | Select-Object Dn,IfRole,LicState,Mode,OperState,OperSpeed,XcvrType | Where-Object {$_.OperState -eq "up"} | ConvertTo-Html -Fragment -PreContent "<h2>Fabric Interconnect Ethernet Port Configuration</h2>"
 
 	# Get Ethernet LAN Uplink Port Channel info
-	AddToOutput -txt "<h2>Fabric Interconnect Ethernet Uplink Port Channels</h2>"
-	$Global:TMP_OUTPUT += Get-UcsUplinkPortChannel | Sort-Object -Property Name | Select-Object Dn,Name,OperSpeed,OperState,Transport | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsUplinkPortChannel | Sort-Object -Property Name | Select-Object Dn,Name,OperSpeed,OperState,Transport | ConvertTo-Html -Fragment -PreContent "<h2>Fabric Interconnect Ethernet Uplink Port Channels</h2>"
 
 	# Get Ethernet LAN Uplink Port Channel port membership info
-	AddToOutput -txt "<h2>Fabric Interconnect Ethernet Uplink Port Channel Members</h2>"
-	$Global:TMP_OUTPUT += Get-UcsUplinkPortChannelMember | Sort-Object -Property Dn |Select-Object Dn,Membership | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsUplinkPortChannelMember | Sort-Object -Property Dn |Select-Object Dn,Membership | ConvertTo-Html -Fragment -PreContent "<h2>Fabric Interconnect Ethernet Uplink Port Channel Members</h2>"
 
 	# Get QoS Class Configuration
-	AddToOutput -txt "<h2>QoS System Class Configuration</h2>"
-	$Global:TMP_OUTPUT += Get-UcsQosClass | Select-Object Priority,AdminState,Cos,Weight,Drop,Mtu | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsQosClass | Select-Object Priority,AdminState,Cos,Weight,Drop,Mtu | ConvertTo-Html -Fragment -PreContent "<h2>QoS System Class Configuration</h2>"
 
 	# Get QoS Policies
-	AddToOutput -txt "<h2>QoS Policies</h2>"
-	$Global:TMP_OUTPUT += Get-UcsQosPolicy | Select-Object Dn,Name | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsQosPolicy | Select-Object Dn,Name | ConvertTo-Html -Fragment -PreContent "<h2>QoS Policies</h2>"
 
 	# Get QoS vNIC Policy Map
-	AddToOutput -txt "<h2>QoS vNIC Policy Map</h2>"
-	$Global:TMP_OUTPUT += Get-UcsVnicEgressPolicy | Sort-Object -Property Prio | Select-Object Dn,Prio | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsVnicEgressPolicy | Sort-Object -Property Prio | Select-Object Dn,Prio | ConvertTo-Html -Fragment -PreContent "<h2>QoS vNIC Policy Map</h2>"
 
 	# Get Ethernet VLANs
-	AddToOutput -txt "<h2>Ethernet VLANs</h2>"
-	$Global:TMP_OUTPUT += Get-UcsVlan | Where-Object {$_.IfRole -eq "network"} | Sort-Object -Property Id | Select-Object Id,Name,SwitchId | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsVlan | Where-Object {$_.IfRole -eq "network"} | Sort-Object -Property Id | Select-Object Id,Name,SwitchId | ConvertTo-Html -Fragment -PreContent "<h2>Ethernet VLANs</h2>"
 
 	AddToOutput -txt "</div>" # end subtab
 	AddToOutput -txt "<div class='content-sub' id='lan-config-tab-policies'>"
 
 	# Get Network Control Policies
-	AddToOutput -txt "<h2>Network Control Policies</h2>"
-	$Global:TMP_OUTPUT += Get-UcsNetworkControlPolicy | Select-Object Dn,Name,Cdp,UplinkFailAction | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsNetworkControlPolicy | Select-Object Dn,Name,Cdp,UplinkFailAction | ConvertTo-Html -Fragment -PreContent "<h2>Network Control Policies</h2>"
 
 	# Get vNIC Templates
 	$vnicTemplates = Get-UcsVnicTemplate | Select-Object Dn,Name,Descr,SwitchId,TemplType,IdentPoolName,Mtu,NwCtrlPolicyName,QosPolicyName
-	AddToOutput -txt "<h2>vNIC Templates</h2>"
-	$Global:TMP_OUTPUT += $vnicTemplates | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += $vnicTemplates | ConvertTo-Html -Fragment -PreContent "<h2>vNIC Templates</h2>"
 
 	# Get Ethernet VLAN to vNIC Mappings #
-	AddToOutput -txt "<h2>Ethernet VLAN to vNIC Mappings</h2>"
-	$Global:TMP_OUTPUT += Get-UcsAdaptorVlan | sort-object Dn |Select-Object Dn,Name,Id,SwitchId | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsAdaptorVlan | sort-object Dn |Select-Object Dn,Name,Id,SwitchId | ConvertTo-Html -Fragment -PreContent "<h2>Ethernet VLAN to vNIC Mappings</h2>"
 
 	AddToOutput -txt "</div>" # end subtab
 	AddToOutput -txt "<div class='content-sub' id='lan-config-tab-pools'>"
 
 	# Get IP Pools
-	AddToOutput -txt "<h2>IP Pools</h2>"
-	$Global:TMP_OUTPUT += Get-UcsIpPool | Select-Object Dn,Name,AssignmentOrder,Size | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsIpPool | Select-Object Dn,Name,AssignmentOrder,Size | ConvertTo-Html -Fragment -PreContent "<h2>IP Pools</h2>"
 
 	# Get IP Pool Blocks
-	AddToOutput -txt "<h2>IP Pool Blocks</h2>"
-	$Global:TMP_OUTPUT += Get-UcsIpPoolBlock | Select-Object Dn,From,To,Subnet,DefGw | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsIpPoolBlock | Select-Object Dn,From,To,Subnet,DefGw | ConvertTo-Html -Fragment -PreContent "<h2>IP Pool Blocks</h2>"
 
 	# Get IP CIMC MGMT Pool Assignments
-	AddToOutput -txt "<h2>CIMC IP Pool Assignments</h2>"
-	$Global:TMP_OUTPUT += Get-UcsIpPoolAddr | Sort-Object -Property AssignedToDn | Where-Object {$_.Assigned -eq "yes"} | Select-Object AssignedToDn,Id | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsIpPoolAddr | Sort-Object -Property AssignedToDn | Where-Object {$_.Assigned -eq "yes"} | Select-Object AssignedToDn,Id | ConvertTo-Html -Fragment -PreContent "<h2>CIMC IP Pool Assignments</h2>"
 
 	# Get MAC Address Pools
-	AddToOutput -txt "<h2>MAC Address Pools</h2>"
-	$Global:TMP_OUTPUT += Get-UcsMacPool | Select-Object Dn,Name,AssignmentOrder,Size,Assigned | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsMacPool | Select-Object Dn,Name,AssignmentOrder,Size,Assigned | ConvertTo-Html -Fragment -PreContent "<h2>MAC Address Pools</h2>"
 
 	# Get MAC Address Pool Blocks
-	AddToOutput -txt "<h2>MAC Address Pool Blocks</h2>"
-	$Global:TMP_OUTPUT += Get-UcsMacMemberBlock | Select-Object Dn,From,To | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsMacMemberBlock | Select-Object Dn,From,To | ConvertTo-Html -Fragment -PreContent "<h2>MAC Address Pool Blocks</h2>"
 
 	# Get MAC Pool Assignments
-	AddToOutput -txt "<h2>MAC Address Pool Assignments</h2>"
-	$Global:TMP_OUTPUT += Get-UcsVnic | Sort-Object -Property Dn | Select-Object Dn,IdentPoolName,Addr | Where-Object {$_.Addr -ne "derived"} | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsVnic | Sort-Object -Property Dn | Select-Object Dn,IdentPoolName,Addr | Where-Object {$_.Addr -ne "derived"} | ConvertTo-Html -Fragment -PreContent "<h2>MAC Address Pool Assignments</h2>"
 
 	AddToOutput -txt "</div>" # end subtab
 	AddToOutput -txt "</div>" # end subtabs containers
@@ -604,67 +512,53 @@ function GenerateReport()
 	AddToOutput -txt "<div class='content-sub' id='san-config-tab-san'>"
 
 	# Get SAN Switching Mode
-	AddToOutput -txt "<h2>Fabric Interconnect Fibre Channel Switching Mode</h2>"
-	$Global:TMP_OUTPUT += Get-UcsSanCloud | Select-Object Rn,Mode | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsSanCloud | Select-Object Rn,Mode | ConvertTo-Html -Fragment -PreContent "<h2>Fabric Interconnect Fibre Channel Switching Mode</h2>"
 
 	# Get Fabric Interconnect FC Uplink Ports
-	AddToOutput -txt "<h2>Fabric Interconnect FC Uplink Ports</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFiFcPort | Select-Object EpDn,SwitchId,SlotId,PortId,LicState,Mode,OperSpeed,OperState,wwn | sort-object -descending  | where-object {$_.OperState -ne "sfp-not-present"} | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsFiFcPort | Select-Object EpDn,SwitchId,SlotId,PortId,LicState,Mode,OperSpeed,OperState,wwn | sort-object -descending  | where-object {$_.OperState -ne "sfp-not-present"} | ConvertTo-Html -Fragment -PreContent "<h2>Fabric Interconnect FC Uplink Ports</h2>"
 
 	# Get SAN Fiber Channel Uplink Port Channel info
-	AddToOutput -txt "<h2>Fabric Interconnect FC Uplink Port Channels</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFcUplinkPortChannel | Select-Object Dn,Name,OperSpeed,OperState,Transport | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsFcUplinkPortChannel | Select-Object Dn,Name,OperSpeed,OperState,Transport | ConvertTo-Html -Fragment -PreContent "<h2>Fabric Interconnect FC Uplink Port Channels</h2>"
 
 	# Get Fabric Interconnect FCoE Uplink Ports
-	AddToOutput -txt "<h2>Fabric Interconnect FCoE Uplink Ports</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFabricPort | Where-Object {$_.IfRole -eq "fcoe-uplink"} | Select-Object IfRole,EpDn,LicState,OperState,OperSpeed | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsFabricPort | Where-Object {$_.IfRole -eq "fcoe-uplink"} | Select-Object IfRole,EpDn,LicState,OperState,OperSpeed | ConvertTo-Html -Fragment -PreContent "<h2>Fabric Interconnect FCoE Uplink Ports</h2>"
 
 	# Get SAN FCoE Uplink Port Channel info
-	AddToOutput -txt "<h2>Fabric Interconnect FCoE Uplink Port Channels</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFabricFcoeSanPc | Select-Object Dn,Name,FcoeState,OperState,Transport,Type | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsFabricFcoeSanPc | Select-Object Dn,Name,FcoeState,OperState,Transport,Type | ConvertTo-Html -Fragment -PreContent "<h2>Fabric Interconnect FCoE Uplink Port Channels</h2>"
 
 	# Get SAN FCoE Uplink Port Channel Members
-	AddToOutput -txt "<h2>Fabric Interconnect FCoE Uplink Port Channel Members</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFabricFcoeSanPcEp | Select-Object Dn,IfRole,LicState,Membership,OperState,SwitchId,PortId,Type | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsFabricFcoeSanPcEp | Select-Object Dn,IfRole,LicState,Membership,OperState,SwitchId,PortId,Type | ConvertTo-Html -Fragment -PreContent "<h2>Fabric Interconnect FCoE Uplink Port Channel Members</h2>"
 
 	# Get FC VSAN info
-	AddToOutput -txt "<h2>FC VSANs</h2>"
-	$Global:TMP_OUTPUT += Get-UcsVsan | Select-Object Dn,Id,FcoeVlan,DefaultZoning | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsVsan | Select-Object Dn,Id,FcoeVlan,DefaultZoning | ConvertTo-Html -Fragment -PreContent "<h2>FC VSANs</h2>"
 
 	# Get FC Port Channel VSAN Mapping
-	AddToOutput -txt "<h2>FC VSAN to FC Port Mappings</h2>"
-	$Global:TMP_OUTPUT += Get-UcsVsanMemberFcPortChannel | Select-Object EpDn,IfType | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsVsanMemberFcPortChannel | Select-Object EpDn,IfType | ConvertTo-Html -Fragment -PreContent "<h2>FC VSAN to FC Port Mappings</h2>"
 
 	AddToOutput -txt "</div>" # end subtab
 	AddToOutput -txt "<div class='content-sub' id='san-config-tab-policies'>"
 
 	# Get vHBA Templates
 	$vhbaTemplates = Get-UcsVhbaTemplate | Select-Object Dn,Name,Descr,SwitchId,TemplType,QosPolicyName
-	AddToOutput -txt "<h2>vHBA Templates</h2>"
-	$Global:TMP_OUTPUT += $vhbaTemplates | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += $vhbaTemplates | ConvertTo-Html -Fragment -PreContent "<h2>vHBA Templates</h2>"
 
 	# Get Service Profiles vNIC/vHBA Assignments
-	AddToOutput -txt "<h2>Service Profile vHBA Placements</h2>"
-	$Global:TMP_OUTPUT += Get-UcsLsVConAssign -Transport fc | Select-Object Dn,Vnicname,Adminvcon,Order | Sort-Object dn | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsLsVConAssign -Transport fc | Select-Object Dn,Vnicname,Adminvcon,Order | Sort-Object dn | ConvertTo-Html -Fragment -PreContent "<h2>Service Profile vHBA Placements</h2>"
 
 	# Get vHBA to VSAN Mappings
-	AddToOutput -txt "<h2>vHBA to VSAN Mappings</h2>"
-	$Global:TMP_OUTPUT += Get-UcsVhbaInterface | Select-Object Dn,OperVnetName,Initiator | Where-Object {$_.Initiator -ne "00:00:00:00:00:00:00:00"} | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsVhbaInterface | Select-Object Dn,OperVnetName,Initiator | Where-Object {$_.Initiator -ne "00:00:00:00:00:00:00:00"} | ConvertTo-Html -Fragment -PreContent "<h2>vHBA to VSAN Mappings</h2>"
 
 	AddToOutput -txt "</div>" # end subtab
 	AddToOutput -txt "<div class='content-sub' id='san-config-tab-pools'>"
 
 	# Get WWNN Pools
-	AddToOutput -txt "<h2>WWN Pools</h2>"
-	$Global:TMP_OUTPUT += Get-UcsWwnPool | Select-Object Dn,Name,AssignmentOrder,Purpose,Size,Assigned | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsWwnPool | Select-Object Dn,Name,AssignmentOrder,Purpose,Size,Assigned | ConvertTo-Html -Fragment -PreContent "<h2>WWN Pools</h2>"
 
 	# Get WWNN/WWPN Pool Assignments
-	AddToOutput -txt "<h2>WWN Pool Assignments</h2>"
-	$Global:TMP_OUTPUT += Get-UcsVhba | Sort-Object -Property Addr | Select-Object Dn,IdentPoolName,NodeAddr,Addr | Where-Object {$_.NodeAddr -ne "vnic-derived"} | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsVhba | Sort-Object -Property Addr | Select-Object Dn,IdentPoolName,NodeAddr,Addr | Where-Object {$_.NodeAddr -ne "vnic-derived"} | ConvertTo-Html -Fragment -PreContent "<h2>WWN Pool Assignments</h2>"
 
 	# Get WWNN/WWPN vHBA and adaptor Assignments
-	AddToOutput -txt "<h2>vHBA Details</h2>"
-	$Global:TMP_OUTPUT += Get-UcsAdaptorHostFcIf | sort-object -Property VnicDn -Descending | Select-Object VnicDn,Vendor,Model,LinkState,SwitchId,NodeWwn,Wwn | Where-Object {$_.NodeWwn -ne "00:00:00:00:00:00:00:00"} | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsAdaptorHostFcIf | sort-object -Property VnicDn -Descending | Select-Object VnicDn,Vendor,Model,LinkState,SwitchId,NodeWwn,Wwn | Where-Object {$_.NodeWwn -ne "00:00:00:00:00:00:00:00"} | ConvertTo-Html -Fragment -PreContent "<h2>vHBA Details</h2>"
 
 	AddToOutput -txt "</div>" # end subtab
 	AddToOutput -txt "</div>" # end subtabs containers
@@ -691,113 +585,89 @@ function GenerateReport()
 	AddToOutput -txt "<div class='content-sub' id='admin-config-tab-general'>"
 
 	# Get Organizations
-	AddToOutput -txt "<h2>Organizations</h2>"
-	$Global:TMP_OUTPUT += Get-UcsOrg | Select-Object Name,Dn | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsOrg | Select-Object Name,Dn | ConvertTo-Html -Fragment -PreContent "<h2>Organizations</h2>"
 
 	# Get Fault Policy
-	AddToOutput -txt "<h2>Fault Policy</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFaultPolicy | Select-Object Rn,AckAction,ClearAction,ClearInterval,FlapInterval,RetentionInterval | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsFaultPolicy | Select-Object Rn,AckAction,ClearAction,ClearInterval,FlapInterval,RetentionInterval | ConvertTo-Html -Fragment -PreContent "<h2>Fault Policy</h2>"
 
 	# Get Syslog Remote Destinations
-	AddToOutput -txt "<h2>Remote Syslog</h2>"
-	$Global:TMP_OUTPUT += Get-UcsSyslogClient | Where-Object {$_.AdminState -ne "disabled"} | Select-Object Rn,Severity,Hostname,ForwardingFacility | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsSyslogClient | Where-Object {$_.AdminState -ne "disabled"} | Select-Object Rn,Severity,Hostname,ForwardingFacility | ConvertTo-Html -Fragment -PreContent "<h2>Remote Syslog</h2>"
 
 	# Get Syslog Sources
-	AddToOutput -txt "<h2>Syslog Sources</h2>"
-	$Global:TMP_OUTPUT += Get-UcsSyslogSource | Select-Object Rn,Audits,Events,Faults | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsSyslogSource | Select-Object Rn,Audits,Events,Faults | ConvertTo-Html -Fragment -PreContent "<h2>Syslog Sources</h2>"
 
 	# Get Syslog Local File
-	AddToOutput -txt "<h2>Syslog Local File</h2>"
-	$Global:TMP_OUTPUT += Get-UcsSyslogFile | Select-Object Rn,Name,AdminState,Severity,Size | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsSyslogFile | Select-Object Rn,Name,AdminState,Severity,Size | ConvertTo-Html -Fragment -PreContent "<h2>Syslog Local File</h2>"
 
 	# Get Full State Backup Policy
-	AddToOutput -txt "<h2>Full State Backup Policy</h2>"
-	$Global:TMP_OUTPUT += Get-UcsMgmtBackupPolicy | Select-Object Descr,Host,LastBackup,Proto,Schedule,AdminState | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsMgmtBackupPolicy | Select-Object Descr,Host,LastBackup,Proto,Schedule,AdminState | ConvertTo-Html -Fragment -PreContent "<h2>Full State Backup Policy</h2>"
 
 	# Get All Config Backup Policy
-	AddToOutput -txt "<h2>All Configuration Backup Policy</h2>"
-	$Global:TMP_OUTPUT += Get-UcsMgmtCfgExportPolicy | Select-Object Descr,Host,LastBackup,Proto,Schedule,AdminState | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsMgmtCfgExportPolicy | Select-Object Descr,Host,LastBackup,Proto,Schedule,AdminState | ConvertTo-Html -Fragment -PreContent "<h2>All Configuration Backup Policy</h2>"
 
 	AddToOutput -txt "</div>"
 	AddToOutput -txt "<div class='content-sub' id='admin-config-tab-user'>"
 
 	# Get Native Authentication Source
-	AddToOutput -txt "<h2>Native Authentication</h2>"
-	$Global:TMP_OUTPUT += Get-UcsNativeAuth | Select-Object Rn,DefLogin,ConLogin,DefRolePolicy | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsNativeAuth | Select-Object Rn,DefLogin,ConLogin,DefRolePolicy | ConvertTo-Html -Fragment -PreContent "<h2>Native Authentication</h2>"
 
 	# Get local users
-	AddToOutput -txt "<h2>Local users</h2>"
-	$Global:TMP_OUTPUT += Get-UcsLocalUser | Sort-Object Name | Select-Object Name,Email,AccountStatus,Expiration,Expires,PwdLifeTime | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsLocalUser | Sort-Object Name | Select-Object Name,Email,AccountStatus,Expiration,Expires,PwdLifeTime | ConvertTo-Html -Fragment -PreContent "<h2>Local users</h2>"
 
 	# Get LDAP server info
-	AddToOutput -txt "<h2>LDAP Providers</h2>"
-	$Global:TMP_OUTPUT += Get-UcsLdapProvider | Select-Object Name,Rootdn,Basedn,Attribute | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsLdapProvider | Select-Object Name,Rootdn,Basedn,Attribute | ConvertTo-Html -Fragment -PreContent "<h2>LDAP Providers</h2>"
 
 	# Get LDAP group mappings
-	AddToOutput -txt "<h2>LDAP Group Mappings</h2>"
-	$Global:TMP_OUTPUT += Get-UcsLdapGroupMap | Select-Object Name | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsLdapGroupMap | Select-Object Name | ConvertTo-Html -Fragment -PreContent "<h2>LDAP Group Mappings</h2>"
 
 	# Get user and LDAP group roles
-	AddToOutput -txt "<h2>LDAP User Roles</h2>"
-	$Global:TMP_OUTPUT += Get-UcsUserRole | Select-Object Name,Dn | Where-Object {$_.Dn -like "sys/ldap-ext*"} | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsUserRole | Select-Object Name,Dn | Where-Object {$_.Dn -like "sys/ldap-ext*"} | ConvertTo-Html -Fragment -PreContent "<h2>LDAP User Roles</h2>"
 
 	# Get tacacs providers
-	AddToOutput -txt "<h2>TACACS+ Providers</h2>"
-	$Global:TMP_OUTPUT += Get-UcsTacacsProvider | Sort-Object -Property Order,Name | Select-Object Order,Name,Port,KeySet,Retries,Timeout | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsTacacsProvider | Sort-Object -Property Order,Name | Select-Object Order,Name,Port,KeySet,Retries,Timeout | ConvertTo-Html -Fragment -PreContent "<h2>TACACS+ Providers</h2>"
 
 	AddToOutput -txt "</div>"
 	AddToOutput -txt "<div class='content-sub' id='admin-config-tab-comm'>"
 
 	# Get Call Home config
 	$callHome = Get-UcsCallhome
-	AddToOutput -txt "<h2>Call Home Configuration</h2>"
-	$Global:TMP_OUTPUT += $callHome | Sort-Object -Property Ucs | Select-Object AdminState | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += $callHome | Sort-Object -Property Ucs | Select-Object AdminState | ConvertTo-Html -Fragment -PreContent "<h2>Call Home Configuration</h2>"
 
 	# Get Call Home SMTP Server
-	AddToOutput -txt "<h2>Call Home SMTP Server</h2>"
-	$Global:TMP_OUTPUT += Get-UcsCallhomeSmtp | Sort-Object -Property Ucs | Select-Object Host | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsCallhomeSmtp | Sort-Object -Property Ucs | Select-Object Host | ConvertTo-Html -Fragment -PreContent "<h2>Call Home SMTP Server</h2>"
 
 	# Get Call Home Recipients
-	AddToOutput -txt "<h2>Call Home Recipients</h2>"
-	$Global:TMP_OUTPUT += Get-UcsCallhomeRecipient | Sort-Object -Property Ucs | Select-Object Dn,Email | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsCallhomeRecipient | Sort-Object -Property Ucs | Select-Object Dn,Email | ConvertTo-Html -Fragment -PreContent "<h2>Call Home Recipients</h2>"
 
 	# Get SNMP Configuration
-	AddToOutput -txt "<h2>SNMP Configuration</h2>"
-	$Global:TMP_OUTPUT += Get-UcsSnmp | Sort-Object -Property Ucs | Select-Object AdminState,Community,SysContact,SysLocation | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsSnmp | Sort-Object -Property Ucs | Select-Object AdminState,Community,SysContact,SysLocation | ConvertTo-Html -Fragment -PreContent "<h2>SNMP Configuration</h2>"
 
 	# Get DNS Servers
 	$dnsServers = Get-UcsDnsServer | Select-Object Name
-	AddToOutput -txt "<h2>DNS Servers</h2>"
-	$Global:TMP_OUTPUT += $dnsServers | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += $dnsServers | ConvertTo-Html -Fragment -PreContent "<h2>DNS Servers</h2>"
 
 	# Get Timezone
-	AddToOutput -txt "<h2>Timezone</h2>"
-	$Global:TMP_OUTPUT += Get-UcsTimezone | Select-Object Timezone | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsTimezone | Select-Object Timezone | ConvertTo-Html -Fragment -PreContent "<h2>Timezone</h2>"
 
 	# Get NTP Servers
 	$ntpServers = Get-UcsNtpServer | Select-Object Name
-	AddToOutput -txt "<h2>NTP Servers</h2>"
-	$Global:TMP_OUTPUT += $ntpServers | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += $ntpServers | ConvertTo-Html -Fragment -PreContent "<h2>NTP Servers</h2>"
 
 	# Get Cluster Configuration and State
-	AddToOutput -txt "<h2>Cluster Configuration</h2>"
-	$Global:TMP_OUTPUT += Get-UcsStatus | Select-Object Name,VirtualIpv4Address,HaConfiguration,HaReadiness,HaReady,FiALeadership,FiAOobIpv4Address,FiAOobIpv4DefaultGateway,FiAManagementServicesState,FiBLeadership,FiBOobIpv4Address,FiBOobIpv4DefaultGateway,FiBManagementServicesState | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsStatus | Select-Object Name,VirtualIpv4Address,HaConfiguration,HaReadiness,HaReady,FiALeadership,FiAOobIpv4Address,FiAOobIpv4DefaultGateway,FiAManagementServicesState,FiBLeadership,FiBOobIpv4Address,FiBOobIpv4DefaultGateway,FiBManagementServicesState | ConvertTo-Html -Fragment -PreContent "<h2>Cluster Configuration</h2>"
 
 	# Get Management Interface Monitoring Policy
-	AddToOutput -txt "<h2>Management Interface Monitoring Policy</h2>"
-	$Global:TMP_OUTPUT += Get-UcsMgmtInterfaceMonitorPolicy | Select-Object AdminState,EnableHAFailover,MonitorMechanism | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsMgmtInterfaceMonitorPolicy | Select-Object AdminState,EnableHAFailover,MonitorMechanism | ConvertTo-Html -Fragment -PreContent "<h2>Management Interface Monitoring Policy</h2>"
 
 	AddToOutput -txt "</div>"
 	AddToOutput -txt "<div class='content-sub' id='admin-config-tab-license'>"
 
 	# Get host-id information
-	AddToOutput -txt "<h2>Fabric Interconnect HostIDs</h2>"
-	$Global:TMP_OUTPUT += Get-UcsLicenseServerHostId | Sort-Object -Property Scope | Select-Object Scope,HostId | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsLicenseServerHostId | Sort-Object -Property Scope | Select-Object Scope,HostId | ConvertTo-Html -Fragment -PreContent "<h2>Fabric Interconnect HostIDs</h2>"
 
 	# Get installed license information
 	$ucsLicenses = Get-UcsLicense
-	AddToOutput -txt "<h2>Installed Licenses</h2>"
-	$Global:TMP_OUTPUT += $ucsLicenses | Sort-Object -Property Scope,Feature | Select-Object Scope,Feature,Sku,AbsQuant,UsedQuant,GracePeriodUsed,OperState,PeerStatus | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += $ucsLicenses | Sort-Object -Property Scope,Feature | Select-Object Scope,Feature,Sku,AbsQuant,UsedQuant,GracePeriodUsed,OperState,PeerStatus | ConvertTo-Html -Fragment -PreContent "<h2>Installed Licenses</h2>"
 
 	AddToOutput -txt "</div>" # end subtab
 	AddToOutput -txt "</div>" # end subtabs containers
@@ -820,78 +690,62 @@ function GenerateReport()
 	AddToOutput -txt "<div class='content-sub' id='stats-tab-faults'>"
 
 	# Get all UCS Faults sorted by severity
-	AddToOutput -txt "<h2>Faults</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFault | Sort-Object -Property @{Expression = {$_.Severity}; Ascending = $true}, Created -Descending | Select-Object Severity,Created,Descr,dn | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsFault | Sort-Object -Property @{Expression = {$_.Severity}; Ascending = $true}, Created -Descending | Select-Object Severity,Created,Descr,dn | ConvertTo-Html -Fragment -PreContent "<h2>Faults</h2>"
 
 	AddToOutput -txt "</div>" # end subtab
 	AddToOutput -txt "<div class='content-sub' id='stats-tab-equip'>"
 
 	# Get chassis power usage stats
 	AddToOutput -txt "<br /><small>* Temperatures are in Celcius</small>"
-	AddToOutput -txt "<h2>Chassis Power</h2>"
-	$Global:TMP_OUTPUT += Get-UcsChassisStats | Select-Object Dn,InputPower,InputPowerAvg,InputPowerMax,InputPowerMin,OutputPower,OutputPowerAvg,OutputPowerMax,OutputPowerMin,Suspect | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsChassisStats | Select-Object Dn,InputPower,InputPowerAvg,InputPowerMax,InputPowerMin,OutputPower,OutputPowerAvg,OutputPowerMax,OutputPowerMin,Suspect | ConvertTo-Html -Fragment -PreContent "<h2>Chassis Power</h2>"
 
 	# Get chassis and FI power status
-	AddToOutput -txt "<h2>Chassis and Fabric Interconnect Power Supply Status</h2>"
-	$Global:TMP_OUTPUT += Get-UcsPsu | Sort-Object -Property Dn | Select-Object Dn,OperState,Perf,Power,Thermal,Voltage | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsPsu | Sort-Object -Property Dn | Select-Object Dn,OperState,Perf,Power,Thermal,Voltage | ConvertTo-Html -Fragment -PreContent "<h2>Chassis and Fabric Interconnect Power Supply Status</h2>"
 
 	# Get chassis PSU stats
-	AddToOutput -txt "<h2>Chassis Power Supplies</h2>"
-	$Global:TMP_OUTPUT += Get-UcsPsuStats | Sort-Object -Property Dn | Select-Object Dn,AmbientTemp,AmbientTempAvg,Input210v,Input210vAvg,Output12v,Output12vAvg,OutputCurrentAvg,OutputPowerAvg,Suspect | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsPsuStats | Sort-Object -Property Dn | Select-Object Dn,AmbientTemp,AmbientTempAvg,Input210v,Input210vAvg,Output12v,Output12vAvg,OutputCurrentAvg,OutputPowerAvg,Suspect | ConvertTo-Html -Fragment -PreContent "<h2>Chassis Power Supplies</h2>"
 
 	# Get chassis and FI fan stats
-	AddToOutput -txt "<h2>Chassis and Fabric Interconnect Fan</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFan | Sort-Object -Property Dn | Select-Object Dn,Module,Id,Perf,Power,OperState,Thermal | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsFan | Sort-Object -Property Dn | Select-Object Dn,Module,Id,Perf,Power,OperState,Thermal | ConvertTo-Html -Fragment -PreContent "<h2>Chassis and Fabric Interconnect Fan</h2>"
 
 	# Get chassis IOM temp stats
-	AddToOutput -txt "<h2>Chassis IOM Temperatures</h2>"
-	$Global:TMP_OUTPUT += Get-UcsEquipmentIOCardStats | Sort-Object -Property Dn | Select-Object Dn,AmbientTemp,AmbientTempAvg,Temp,TempAvg,Suspect | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsEquipmentIOCardStats | Sort-Object -Property Dn | Select-Object Dn,AmbientTemp,AmbientTempAvg,Temp,TempAvg,Suspect | ConvertTo-Html -Fragment -PreContent "<h2>Chassis IOM Temperatures</h2>"
 
 	# Get server power usage
-	AddToOutput -txt "<h2>Server Power</h2>"
-	$Global:TMP_OUTPUT += Get-UcsComputeMbPowerStats | Sort-Object -Property Dn | Select-Object Dn,ConsumedPower,ConsumedPowerAvg,ConsumedPowerMax,InputCurrent,InputCurrentAvg,InputVoltage,InputVoltageAvg,Suspect | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsComputeMbPowerStats | Sort-Object -Property Dn | Select-Object Dn,ConsumedPower,ConsumedPowerAvg,ConsumedPowerMax,InputCurrent,InputCurrentAvg,InputVoltage,InputVoltageAvg,Suspect | ConvertTo-Html -Fragment -PreContent "<h2>Server Power</h2>"
 
 	# Get server temperatures
-	AddToOutput -txt "<h2>Server Temperatures</h2>"
-	$Global:TMP_OUTPUT += Get-UcsComputeMbTempStats | Sort-Object -Property Dn | Select-Object Dn,FmTempSenIo,FmTempSenIoAvg,FmTempSenIoMax,FmTempSenRear,FmTempSenRearAvg,FmTempSenRearMax,Suspect | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsComputeMbTempStats | Sort-Object -Property Dn | Select-Object Dn,FmTempSenIo,FmTempSenIoAvg,FmTempSenIoMax,FmTempSenRear,FmTempSenRearAvg,FmTempSenRearMax,Suspect | ConvertTo-Html -Fragment -PreContent "<h2>Server Temperatures</h2>"
 
 	# Get Memory temperatures
-	AddToOutput -txt "<h2>Memory Temperatures</h2>"
-	$Global:TMP_OUTPUT += Get-UcsMemoryUnitEnvStats | Sort-Object -Property Dn | Select-Object Dn,Temperature,TemperatureAvg,TemperatureMax,Suspect | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsMemoryUnitEnvStats | Sort-Object -Property Dn | Select-Object Dn,Temperature,TemperatureAvg,TemperatureMax,Suspect | ConvertTo-Html -Fragment -PreContent "<h2>Memory Temperatures</h2>"
 
 	# Get CPU power and temperatures
-	AddToOutput -txt "<h2>CPU Power and Temperatures</h2>"
-	$Global:TMP_OUTPUT += Get-UcsProcessorEnvStats | Sort-Object -Property Dn | Select-Object Dn,InputCurrent,InputCurrentAvg,InputCurrentMax,Temperature,TemperatureAvg,TemperatureMax,Suspect | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsProcessorEnvStats | Sort-Object -Property Dn | Select-Object Dn,InputCurrent,InputCurrentAvg,InputCurrentMax,Temperature,TemperatureAvg,TemperatureMax,Suspect | ConvertTo-Html -Fragment -PreContent "<h2>CPU Power and Temperatures</h2>"
 
 	AddToOutput -txt "</div>" # end subtab
 	AddToOutput -txt "<div class='content-sub' id='stats-tab-eth'>"
 
 	# Get LAN Uplink Port Channel Loss Stats
-	AddToOutput -txt "<h2>LAN Uplink Port Channel Loss</h2>"
-	$Global:TMP_OUTPUT += Get-UcsUplinkPortChannel | Get-UcsEtherLossStats | Sort-Object -Property Dn | Select-Object Dn,ExcessCollision,ExcessCollisionDeltaAvg,LateCollision,LateCollisionDeltaAvg,MultiCollision,MultiCollisionDeltaAvg,SingleCollision,SingleCollisionDeltaAvg | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsUplinkPortChannel | Get-UcsEtherLossStats | Sort-Object -Property Dn | Select-Object Dn,ExcessCollision,ExcessCollisionDeltaAvg,LateCollision,LateCollisionDeltaAvg,MultiCollision,MultiCollisionDeltaAvg,SingleCollision,SingleCollisionDeltaAvg | ConvertTo-Html -Fragment -PreContent "<h2>LAN Uplink Port Channel Loss</h2>"
 
 	# Get LAN Uplink Port Channel Receive Stats
-	AddToOutput -txt "<h2>LAN Uplink Port Channel Receive</h2>"
-	$Global:TMP_OUTPUT += Get-UcsUplinkPortChannel | Get-UcsEtherRxStats | Sort-Object -Property Dn | Select-Object Dn,BroadcastPackets,BroadcastPacketsDeltaAvg,JumboPackets,JumboPacketsDeltaAvg,MulticastPackets,MulticastPacketsDeltaAvg,TotalBytes,TotalBytesDeltaAvg,TotalPackets,TotalPacketsDeltaAvg,Suspect | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsUplinkPortChannel | Get-UcsEtherRxStats | Sort-Object -Property Dn | Select-Object Dn,BroadcastPackets,BroadcastPacketsDeltaAvg,JumboPackets,JumboPacketsDeltaAvg,MulticastPackets,MulticastPacketsDeltaAvg,TotalBytes,TotalBytesDeltaAvg,TotalPackets,TotalPacketsDeltaAvg,Suspect | ConvertTo-Html -Fragment -PreContent "<h2>LAN Uplink Port Channel Receive</h2>"
 
 	# Get LAN Uplink Port Channel Transmit Stats
-	AddToOutput -txt "<h2>LAN Uplink Port Channel Transmit</h2>"
-	$Global:TMP_OUTPUT += Get-UcsUplinkPortChannel | Get-UcsEtherTxStats | Sort-Object -Property Dn | Select-Object Dn,BroadcastPackets,BroadcastPacketsDeltaAvg,JumboPackets,JumboPacketsDeltaAvg,MulticastPackets,MulticastPacketsDeltaAvg,TotalBytes,TotalBytesDeltaAvg,TotalPackets,TotalPacketsDeltaAvg,Suspect | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsUplinkPortChannel | Get-UcsEtherTxStats | Sort-Object -Property Dn | Select-Object Dn,BroadcastPackets,BroadcastPacketsDeltaAvg,JumboPackets,JumboPacketsDeltaAvg,MulticastPackets,MulticastPacketsDeltaAvg,TotalBytes,TotalBytesDeltaAvg,TotalPackets,TotalPacketsDeltaAvg,Suspect | ConvertTo-Html -Fragment -PreContent "<h2>LAN Uplink Port Channel Transmit</h2>"
 
 	# Get vNIC Stats
-	AddToOutput -txt "<h2>vNICs</h2>"
-	$Global:TMP_OUTPUT += Get-UcsAdaptorVnicStats | Sort-Object -Property Dn | Select-Object Dn,BytesRx,BytesRxDeltaAvg,BytesTx,BytesTxDeltaAvg,PacketsRx,PacketsRxDeltaAvg,PacketsTx,PacketsTxDeltaAvg,DroppedRx,DroppedRxDeltaAvg,DroppedTx,DroppedTxDeltaAvg,ErrorsTx,ErrorsTxDeltaAvg,Suspect | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsAdaptorVnicStats | Sort-Object -Property Dn | Select-Object Dn,BytesRx,BytesRxDeltaAvg,BytesTx,BytesTxDeltaAvg,PacketsRx,PacketsRxDeltaAvg,PacketsTx,PacketsTxDeltaAvg,DroppedRx,DroppedRxDeltaAvg,DroppedTx,DroppedTxDeltaAvg,ErrorsTx,ErrorsTxDeltaAvg,Suspect | ConvertTo-Html -Fragment -PreContent "<h2>vNICs</h2>"
 
 	AddToOutput -txt "</div>" # end subtab
 	AddToOutput -txt "<div class='content-sub' id='stats-tab-fc'>"
 
 	# Get FC Uplink Port Channel Loss Stats
-	AddToOutput -txt "<h2>FC Uplink Ports</h2>"
-	$Global:TMP_OUTPUT += Get-UcsFcErrStats | Sort-Object -Property Dn | Select-Object Dn,CrcRx,CrcRxDeltaAvg,DiscardRx,DiscardRxDeltaAvg,DiscardTx,DiscardTxDeltaAvg,LinkFailures,SignalLosses,Suspect | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsFcErrStats | Sort-Object -Property Dn | Select-Object Dn,CrcRx,CrcRxDeltaAvg,DiscardRx,DiscardRxDeltaAvg,DiscardTx,DiscardTxDeltaAvg,LinkFailures,SignalLosses,Suspect | ConvertTo-Html -Fragment -PreContent "<h2>FC Uplink Ports</h2>"
 
 	# Get FCoE Uplink Port Channel Stats
-	AddToOutput -txt "<h2>FCoE Uplink Port Channels</h2>"
-	$Global:TMP_OUTPUT += Get-UcsEtherFcoeInterfaceStats | Select-Object DN,BytesRx,BytesTx,DroppedRx,DroppedTx,ErrorsRx,ErrorsTx | ConvertTo-Html -Fragment
+	$Global:TMP_OUTPUT += Get-UcsEtherFcoeInterfaceStats | Select-Object DN,BytesRx,BytesTx,DroppedRx,DroppedTx,ErrorsRx,ErrorsTx | ConvertTo-Html -Fragment -PreContent "<h2>FCoE Uplink Port Channels</h2>"
 
 	AddToOutput -txt "</div>" # end subtab
 	AddToOutput -txt "</div>" # end subtabs containers
@@ -1150,7 +1004,6 @@ if ($CSVFile -eq "")
 		WriteLog "Please specify the hostname or IP address of a UCS Manager!"
 		Exit
 	}
-
 	# Prompt for HTML report file output name and path
 	if ($OutFile -eq "") {
 		$OutFile = Read-Host "Enter file name for the HTML output file"
