@@ -36,6 +36,30 @@ Done! Here's your encrypted password, save this in the CSV:
 
 Take that very long string and put it in the "Encrypted Password" column of the CSV.
 
+### Using Credential Management PowerShell Module
+The PowerShell module called "CredentialManagement" allows Credentials to be stored within the Windows Credential Store against the user account that is running the script.
+Details on this module are available at https://www.mosaicmk.com/credential-management-module
+If you wish to use this facility within the UCS Inventory Script, ensure that the "Encrypted Password" field within the CSVFile is set to "CredentialManagement"
+Refer to ucs-domains-uscpecredm.csv for en example of this format.
+You will also need to run the following as the user who is running the task to initially add the credentials into the Windows Credential store.
+```
+Import-Module CredentialManagement
+Add-StoredCredentials -UserName "<USERNAME>" -Password '<PASSWORD>' -Target "<TARGET>"
+Add-StoredCredentials -UserName "ucspe" -Password 'ucspe' -Target "192.168.1.170"
+```
+
+## Emailing the UCS Inventory reports
+Email capability has been added to the UCS Inventory Script.
+Within the top of the script update the following lines to suit your configuration.
+* $smtpServer = "smtpserver" 
+* $mailFrom = "Cisco UCS Inventory Script <ucscheck@domain.com>"
+* $mailTo = "user@domain.com"
+* $OutFilePath = "C:\Scripts\Cisco-UCS-Inventory-Script\"
+
+.\UCS-Inventory-Script.ps1 -CSVFile c:\ucs-domains.csv -SendEmail
+* -CSVFile: CSV file with info on one or more UCS Manager.
+* -SendEmail: Triggers an Email to be sent once the report has been generated using values stored within the script
+
 ## Logging output
 If you're using this script in an automated fashion, it might be useful to log the scripts output. You can use the -LogFile parameter for that:
 
@@ -50,6 +74,8 @@ If there are any changes you’d like to see, more information or other recommen
 
 ## Changelog
 ```
+v1.7 - 15-08-2022 - Added support for the "CredentialManagement" Powershell module https://www.mosaicmk.com/credential-management-module
+v1.6 - 17-03-2022 - Added Email capability, Added Package Versions to Firmware releases, Cleaned up use of ConvertTo-Html
 v1.3 - 17-04-2016 - Added multiple UCS Manager support via a CSV file and logging to a file.
 v1.2 - 30-06-2014 - Added a recommendations tab for configuration and health recommendations,
                     taken from experience in the field.  

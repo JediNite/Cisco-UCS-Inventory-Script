@@ -1,5 +1,5 @@
 #
-#	Cisco UCS Inventory Script (UIS) - v1.7 (17-03-2022)
+#	Cisco UCS Inventory Script (UIS) - v1.7 (15-08-2022)
 #	 Martijn Smit <martijn@lostdomain.org>
 #	 Jason Gersekowski <gersekow@hotmail.com>
 #
@@ -10,6 +10,7 @@
 #
 #   - If Username or Password parameter are omitted, the script will prompt for manual credentials
 #
+# v1.7 (JG) - 15-08-2022 - Added support for the "CredentialManagement" Powershell module https://www.mosaicmk.com/credential-management-module
 # v1.6 (JG) - 17-03-2022 - Added Email capability, Added Package Versions to Firmware releases, Cleaned up use of ConvertTo-Html
 # v1.3 (MS) - 17-04-2016 - Added multiple UCS Manager support via a CSV file and logging to a file.
 # v1.2 (MS) - 30-06-2014 - Added a recommendations tab for configuration and health recommendations,
@@ -30,6 +31,14 @@ param(	[string]$UCSM = $null,
 $smtpServer = "smtpserver" 
 $mailFrom = "Cisco UCS Inventory Script <ucshcheck@domain.com>"
 $mailTo = "user@domain.com"
+$OutFilePath = "C:\Scripts\Cisco-UCS-Inventory-Script\"
+
+# If the "CredentialManagement" module is to be used instead of the passwords encrypted in the config file, then Create required credentials if required
+# Set the value of "Encrypted Password" to "CredentialManagement" within $CSVFile in order to retrieve the credential in this manner
+# https://www.mosaicmk.com/credential-management-module
+#Import-Module CredentialManagement
+#Add-StoredCredentials -UserName "<USERNAME>" -Password '<PASSWORD>' -Target "<TARGET>"
+#Add-StoredCredentials -UserName "ucspe" -Password 'ucspe' -Target "192.168.1.170"
 
 ###############################################################################################
 # DO NOT UPDATE BELOW THIS LINE                                                               #
@@ -104,7 +113,8 @@ function GenerateReport()
 	}
 
 	# Create or empty file
-	$OutFileObj = New-Item -ItemType file $OutFile -Force
+	$OutFileObject = New-Item -ItemType file $OutFilePath\$OutFile -Force
+	$OutFileFullName = $OutFileObject.FullName
 
 	# Get current date and time
 	$date = Get-Date -Format g
@@ -126,7 +136,7 @@ function GenerateReport()
 		Return
 	}
 
-	WriteLog "Connected to: $UCSM, starting inventory collection and outputting to: $OutFile"
+	WriteLog "Connected to: $UCSM, starting inventory collection and outputting to: $OutFileFullName"
 
 	# Output HTML headers and CSS
 	AddToOutput -txt "<html>"
@@ -964,10 +974,10 @@ function GenerateReport()
 	AddToOutput -txt "</body>"
 	AddToOutput -txt "</html>"
 
-	$Global:TMP_OUTPUT | Out-File $OutFile
+	$Global:TMP_OUTPUT | Out-File $OutFileFullName
 
 	# Open html file
-#	Invoke-Item $OutFile
+#	Invoke-Item $OutFileFullName
 
 	# Disconnect
 	Disconnect-Ucs
@@ -976,7 +986,7 @@ function GenerateReport()
 	if ( $SendEmail ) 
 	{ 
 		$message = New-Object Net.Mail.MailMessage
-		$attachment = New-Object Net.Mail.Attachment($OutFileObj)
+		$attachment = New-Object Net.Mail.Attachment($OutFileObject)
 		$smtp = New-Object Net.Mail.SmtpClient($smtpServer) 
 		$message.From = $mailFrom
 		$message.To.Add($mailTo) 
@@ -1032,18 +1042,20 @@ else
 			# Check input values
 			if ($UCSM -eq "") {
 				WriteLog "Line $line - UCS Manager is empty!"
-			}
-			elseif ($Username -eq "") {
+			} elseif ($Username -eq "") {
 				WriteLog "Line $line - Username is empty!"
-			}
-			elseif ($Password -eq "") {
+			} elseif ($Password -eq "") {
 				WriteLog "Line $line - Password is empty!"
-			}
-			elseif ($OutFile -eq "") {
+			} elseif ($OutFile -eq "") {
 				WriteLog "Line $line - OutFile is empty!"
-			}
-			else
-			{
+			} elseif ( $Password -eq "CredentialManagement" ) {
+				# Obtain Credential via CredentialManagement / Windows Credential Store
+				Import-Module CredentialManagement | Out-Null
+				$Credential = Get-ClearTextStoredCredentials -Target $UCSM
+				$CredPassword = $Credential.Password
+				GenerateReport $UCSM $OutFile $Username $CredPassword "manual"
+			} else {
+				# Use the encrypted password in the CSVFile
 				GenerateReport $UCSM $OutFile $Username $Password "csv"
 			}
 		}
